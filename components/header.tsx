@@ -29,8 +29,8 @@ export function Header() {
           ) : user ? (
             <UserNav />
           ) : (
-            <Button asChild>
-              <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`}>Sign In</Link>
+            <Button variant="default" className="bg-brand-blue hover:bg-brand-blue/90 text-white font-medium" asChild>
+              <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`}>Admin Sign In</Link>
             </Button>
           )}
         </div>

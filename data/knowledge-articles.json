@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1",
+    "title": "Getting Started with Our Help Desk",
+    "content": "# Welcome to NextPhase IT Help Desk\n\nThis guide will help you get started with our help desk system.\n\n## How to Submit a Ticket\n\n1. Navigate to the dashboard\n2. Click on \"Submit New Request\"\n3. Fill out the form with your issue details\n4. Attach any relevant files\n5. Submit your request\n\n## Tracking Your Tickets\n\nYou can track the status of your tickets in the \"My Tickets\" section. Tickets go through the following states:\n\n- **Open**: Your ticket has been received\n- **In Progress**: Our team is working on your issue\n- **Resolved**: The issue has been fixed\n- **Closed**: The ticket is complete\n\n## Need Help?\n\nIf you need immediate assistance, you can also browse our knowledge base for common solutions.",
+    "category": "Getting Started",
+    "tags": ["help desk", "tickets", "getting started"],
+    "createdAt": "2024-01-15T10:00:00.000Z",
+    "updatedAt": "2024-01-15T10:00:00.000Z",
+    "publishedAt": "2024-01-15T10:00:00.000Z",
+    "authorId": "admin"
+  },
+  {
+    "id": "2",
+    "title": "Password Reset Instructions",
+    "content": "# How to Reset Your Password\n\nIf you've forgotten your password, follow these steps to reset it:\n\n## Self-Service Password Reset\n\n1. Go to the login page\n2. Click \"Forgot Password?\"\n3. Enter your email address\n4. Check your email for reset instructions\n5. Follow the link in the email\n6. Create a new password\n\n## Password Requirements\n\nYour new password must:\n- Be at least 8 characters long\n- Include uppercase and lowercase letters\n- Include at least one number\n- Include at least one special character\n\n## Still Having Issues?\n\nIf you're unable to reset your password using the self-service option, please submit a help desk ticket and our IT team will assist you.",
+    "category": "Account Management",
+    "tags": ["password", "reset", "account", "security"],
+    "createdAt": "2024-01-14T09:00:00.000Z",
+    "updatedAt": "2024-01-14T09:00:00.000Z",
+    "publishedAt": "2024-01-14T09:00:00.000Z",
+    "authorId": "admin"
+  }
+]

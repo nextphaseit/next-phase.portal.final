@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod",
+    "deploy:aws": "aws s3 sync out/ s3://your-bucket-name --delete",
+    "build:analyze": "ANALYZE=true npm run build",
+    "build:static": "next build && next export",
+    "security:audit": "npm audit --audit-level moderate",
+    "security:fix": "npm audit fix",
+    "test:lighthouse": "lighthouse http://localhost:3000 --output html --output-path ./lighthouse-report.html"
+  }
+}

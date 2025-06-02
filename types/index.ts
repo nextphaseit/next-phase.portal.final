@@ -57,7 +57,7 @@ export interface KnowledgeArticle {
   tags: string[]
   createdAt: Date
   updatedAt: Date
-  publishedAt?: Date
+  publishedAt?: Date | null
   authorId: string
 }
 

@@ -29,7 +29,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = localStorage.getItem("user")
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser)
-        setUser(parsedUser)
+        // Validate that stored user has correct domain
+        if (parsedUser.email && parsedUser.email.endsWith("@nextphaseit.org")) {
+          setUser(parsedUser)
+        } else {
+          // Remove invalid user
+          localStorage.removeItem("user")
+        }
       }
     } catch (error) {
       console.error("Error loading stored user:", error)
@@ -42,23 +48,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
 
     try {
+      // Validate email domain first
+      if (!email.endsWith("@nextphaseit.org")) {
+        throw new Error("Access denied. Only @nextphaseit.org email addresses are allowed.")
+      }
+
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // For demo purposes, accept any email/password
-      // In production, this would make an actual API call
+      // For demo purposes, accept any @nextphaseit.org email with any password
+      // In production, this would make an actual Azure AD API call
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
-        name: email.includes("microsoft") ? "Microsoft User" : "Demo User",
+        name: email.includes("admin") ? "Admin User" : "NextPhase IT User",
         email: email,
-        role: email.includes("admin") ? "admin" : "user",
+        role: "admin", // All @nextphaseit.org users are admins
       }
 
       setUser(newUser)
       localStorage.setItem("user", JSON.stringify(newUser))
     } catch (error) {
       console.error("Sign-in error:", error)
-      throw new Error("Authentication failed")
+      throw error
     } finally {
       setIsLoading(false)
     }

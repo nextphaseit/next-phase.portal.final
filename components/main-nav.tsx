@@ -9,25 +9,16 @@ export function MainNav() {
 
   return (
     <div className="flex items-center space-x-4 lg:space-x-6">
-      <Logo size="sm" />
+      <Logo size="sm" variant="auto" />
       <nav className="flex items-center space-x-4 lg:space-x-6">
         <Link
-          href="/dashboard"
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/tickets"
+          href="/tickets/new"
           className={cn(
             "text-sm font-medium transition-colors hover:text-primary",
             pathname?.startsWith("/tickets") ? "text-foreground" : "text-muted-foreground",
           )}
         >
-          Tickets
+          Submit Ticket
         </Link>
         <Link
           href="/knowledge"
@@ -47,17 +38,6 @@ export function MainNav() {
         >
           Services
         </Link>
-        {process.env.NODE_ENV === "development" && (
-          <Link
-            href="/test-auth"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              pathname === "/test-auth" ? "text-foreground" : "text-muted-foreground",
-            )}
-          >
-            🧪 Test Auth
-          </Link>
-        )}
       </nav>
     </div>
   )

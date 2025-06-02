@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/ui/logo"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle, Shield } from "lucide-react"
 import { useAuth } from "@/components/providers/auth-provider"
 import Link from "next/link"
 
@@ -18,12 +18,12 @@ export default function SignInPage() {
   const searchParams = useSearchParams()
   const { user, isLoading, signIn } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [email, setEmail] = useState("demo@nextphaseit.com")
-  const [password, setPassword] = useState("password")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
   // Get the callback URL from search params
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const callbackUrl = searchParams.get("callbackUrl") || "/admin"
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function SignInPage() {
       await signIn(email, password)
       // Redirect will happen automatically via useEffect
     } catch (err) {
-      setError("Invalid credentials. Please try again.")
+      setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -52,11 +52,12 @@ export default function SignInPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate Microsoft authentication
-      await signIn("microsoft.user@company.com", "microsoft-auth")
+      // For demo - simulate Microsoft authentication with domain validation
+      const demoEmail = "admin@nextphaseit.org"
+      await signIn(demoEmail, "microsoft-auth")
       // Redirect will happen automatically via useEffect
     } catch (err) {
-      setError("Microsoft sign-in failed. Please try again.")
+      setError(err instanceof Error ? err.message : "Microsoft sign-in failed. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -86,9 +87,14 @@ export default function SignInPage() {
           <div className="flex justify-center">
             <Logo size="md" />
           </div>
+          <div className="flex justify-center">
+            <div className="rounded-full bg-brand-blue/10 p-3">
+              <Shield className="h-6 w-6 text-brand-blue" />
+            </div>
+          </div>
           <div>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to access your help desk portal</CardDescription>
+            <CardTitle className="text-2xl">Admin Sign In</CardTitle>
+            <CardDescription>Access restricted to NextPhase IT administrators only</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -98,6 +104,16 @@ export default function SignInPage() {
               {error}
             </div>
           )}
+
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center gap-2 text-blue-800 text-sm">
+              <Shield className="h-4 w-4" />
+              <span className="font-medium">Access Requirements:</span>
+            </div>
+            <p className="text-blue-700 text-sm mt-1">
+              Only users with @nextphaseit.org email addresses can access the admin panel.
+            </p>
+          </div>
 
           <Button
             onClick={handleMicrosoftSignIn}
@@ -129,7 +145,7 @@ export default function SignInPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
@@ -139,7 +155,7 @@ export default function SignInPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="admin@nextphaseit.org"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -170,19 +186,10 @@ export default function SignInPage() {
             </Button>
           </form>
 
-          <div className="space-y-4 pt-4 border-t">
-            <div className="text-center text-sm text-muted-foreground">
-              <p className="font-medium mb-2">Demo Credentials:</p>
-              <p>Email: demo@nextphaseit.com</p>
-              <p>Password: password</p>
-              <p className="mt-2 text-xs">(Any email/password combination will work for demo)</p>
-            </div>
-
-            <div className="text-center">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/">← Back to Home</Link>
-              </Button>
-            </div>
+          <div className="text-center pt-4 border-t">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/">← Back to Home</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
