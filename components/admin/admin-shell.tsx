@@ -31,7 +31,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, signOut } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
