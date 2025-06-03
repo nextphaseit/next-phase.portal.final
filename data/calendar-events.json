@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "id": "1",
+    "title": "System Maintenance",
+    "description": "Scheduled server maintenance window",
+    "start": "2024-12-15T02:00:00.000Z",
+    "end": "2024-12-15T04:00:00.000Z",
+    "allDay": false,
+    "type": "maintenance",
+    "color": "#f59e0b"
+  },
+  {
+    "id": "2",
+    "title": "Security Update",
+    "description": "Critical security patches deployment",
+    "start": "2024-12-20T18:00:00.000Z",
+    "end": "2024-12-20T20:00:00.000Z",
+    "allDay": false,
+    "type": "alert",
+    "color": "#ef4444"
+  },
+  {
+    "id": "3",
+    "title": "Company Holiday",
+    "description": "Christmas Day - Office Closed",
+    "start": "2024-12-25T00:00:00.000Z",
+    "allDay": true,
+    "type": "holiday",
+    "color": "#10b981"
+  },
+  {
+    "id": "4",
+    "title": "Network Upgrade",
+    "description": "Infrastructure upgrade - possible brief outages",
+    "start": "2024-12-28T01:00:00.000Z",
+    "end": "2024-12-28T05:00:00.000Z",
+    "allDay": false,
+    "type": "maintenance",
+    "color": "#f59e0b"
+  },
+  {
+    "id": "5",
+    "title": "New Year's Day",
+    "description": "Public Holiday - Office Closed",
+    "start": "2025-01-01T00:00:00.000Z",
+    "allDay": true,
+    "type": "holiday",
+    "color": "#10b981"
+  }
+]

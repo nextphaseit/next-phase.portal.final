@@ -1,51 +1,52 @@
+// Environment variable validation and configuration
 export const config = {
+  // App Configuration
   app: {
-    name: "NextPhase IT Help Desk",
-    version: process.env.npm_package_version || "1.0.0",
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    environment: process.env.NODE_ENV || "development",
+    name: "NextPhase IT Help Desk",
+    version: "1.0.0",
   },
 
+  // Authentication
   auth: {
     secret: process.env.NEXTAUTH_SECRET,
-    azure: {
+    url: process.env.NEXTAUTH_URL,
+    azureAd: {
       clientId: process.env.AZURE_AD_CLIENT_ID,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
       tenantId: process.env.AZURE_AD_TENANT_ID,
     },
   },
 
+  // Power Automate Integration
   powerAutomate: {
     webhookUrl: process.env.POWER_AUTOMATE_WEBHOOK_URL,
     searchWebhookUrl: process.env.POWER_AUTOMATE_SEARCH_WEBHOOK_URL,
   },
 
-  security: {
-    rateLimitMax: Number.parseInt(process.env.RATE_LIMIT_MAX || "100"),
-    rateLimitWindow: Number.parseInt(process.env.RATE_LIMIT_WINDOW || "900000"), // 15 minutes
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    allowedFileTypes: [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "text/plain",
-      "image/png",
-      "image/jpeg",
-      "image/gif",
-      "application/zip",
-    ],
+  // SharePoint Configuration
+  sharepoint: {
+    siteUrl: process.env.SHAREPOINT_SITE_URL,
+    listId: process.env.SHAREPOINT_LIST_ID,
   },
 
-  features: {
-    analytics: process.env.NODE_ENV === "production",
-    errorTracking: process.env.NODE_ENV === "production",
-    debugMode: process.env.NODE_ENV === "development",
+  // Rate Limiting
+  rateLimit: {
+    max: Number.parseInt(process.env.RATE_LIMIT_MAX || "100"),
+    window: Number.parseInt(process.env.RATE_LIMIT_WINDOW || "900000"), // 15 minutes
   },
-} as const
+
+  // Feature Flags
+  features: {
+    enableAnalytics: process.env.NODE_ENV === "production",
+    enableDebugMode: process.env.NODE_ENV === "development",
+    enableMaintenance: process.env.MAINTENANCE_MODE === "true",
+  },
+}
 
 // Validate required environment variables
 export function validateConfig() {
-  const required = [
+  const requiredVars = [
     "NEXTAUTH_SECRET",
     "AZURE_AD_CLIENT_ID",
     "AZURE_AD_CLIENT_SECRET",
@@ -54,9 +55,17 @@ export function validateConfig() {
     "POWER_AUTOMATE_SEARCH_WEBHOOK_URL",
   ]
 
-  const missing = required.filter((key) => !process.env[key])
+  const missing = requiredVars.filter((varName) => !process.env[varName])
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
+    console.warn(`Missing environment variables: ${missing.join(", ")}`)
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
+    }
   }
+
+  return config
 }
+
+// Export validated config
+export default validateConfig()

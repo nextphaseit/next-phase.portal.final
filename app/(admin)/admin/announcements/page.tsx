@@ -32,8 +32,8 @@ export default function AnnouncementsPage() {
         "Our help desk system will undergo scheduled maintenance on Sunday, December 15th from 2:00 AM to 4:00 AM EST. During this time, the system may be temporarily unavailable.",
       isActive: true,
       isInternal: false,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
     },
     {
       id: "2",
@@ -42,7 +42,7 @@ export default function AnnouncementsPage() {
         "We've added new troubleshooting guides for common email and network issues. Check out the Knowledge Base for the latest resources.",
       isActive: true,
       isInternal: false,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     },
     {
       id: "3",
@@ -51,7 +51,7 @@ export default function AnnouncementsPage() {
         "Monthly IT department meeting scheduled for Friday at 3:00 PM in Conference Room B. Please review the agenda beforehand.",
       isActive: true,
       isInternal: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
     },
   ])
 
@@ -73,7 +73,7 @@ export default function AnnouncementsPage() {
             ? {
                 ...ann,
                 ...formData,
-                expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : undefined,
+                expiresAt: formData.expiresAt ? formData.expiresAt : undefined,
               }
             : ann,
         ),
@@ -86,8 +86,8 @@ export default function AnnouncementsPage() {
       const newAnnouncement: Announcement = {
         id: Date.now().toString(),
         ...formData,
-        createdAt: new Date(),
-        expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : undefined,
+        createdAt: new Date().toISOString(),
+        expiresAt: formData.expiresAt ? formData.expiresAt : undefined,
       }
       setAnnouncements([newAnnouncement, ...announcements])
       toast({
@@ -114,7 +114,7 @@ export default function AnnouncementsPage() {
       content: announcement.content,
       isActive: announcement.isActive,
       isInternal: announcement.isInternal,
-      expiresAt: announcement.expiresAt ? announcement.expiresAt.toISOString().split("T")[0] : "",
+      expiresAt: announcement.expiresAt ? announcement.expiresAt.split("T")[0] : "",
     })
     setIsDialogOpen(true)
   }
@@ -260,11 +260,11 @@ export default function AnnouncementsPage() {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-4">
                       <span>
-                        <strong>Created:</strong> {announcement.createdAt.toLocaleDateString()}
+                        <strong>Created:</strong> {new Date(announcement.createdAt).toLocaleDateString()}
                       </span>
                       {announcement.expiresAt && (
                         <span>
-                          <strong>Expires:</strong> {announcement.expiresAt.toLocaleDateString()}
+                          <strong>Expires:</strong> {new Date(announcement.expiresAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
