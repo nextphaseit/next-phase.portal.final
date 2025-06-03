@@ -61,16 +61,17 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
     }
 
     // Create the article with proper type handling
+    const now = new Date().toISOString()
     const articleToSave: KnowledgeArticle = {
       id: formData.id || crypto.randomUUID(),
       title: formData.title,
       content: formData.content,
       category: formData.category,
       tags: formData.tags || [],
-      publishedAt: formData.publishedAt || null,
+      publishedAt: formData.publishedAt,
       authorId: formData.authorId || "current-user",
-      createdAt: formData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: formData.createdAt || now,
+      updatedAt: now,
     }
 
     onSave(articleToSave)

@@ -25,7 +25,6 @@ import {
 import { CalendarIcon, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "@/components/ui/use-toast"
-import type { Ticket } from "@/types"
 
 // Define event types
 type EventType = "ticket" | "alert" | "holiday" | "maintenance"
@@ -33,11 +32,25 @@ type EventType = "ticket" | "alert" | "holiday" | "maintenance"
 interface CalendarEvent {
   id: string
   title: string
-  date: Date
+  date: string // Changed from Date to string
   description?: string
   type: EventType
   ticketId?: string
   priority?: string
+}
+
+interface Ticket {
+  id: string
+  reference: string
+  title: string
+  description: string
+  status: string
+  priority: string
+  category: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+  dueDate?: string // Changed from Date to string
 }
 
 export function CalendarView() {
@@ -73,9 +86,9 @@ export function CalendarView() {
           priority: "high",
           category: "Network",
           userId: "user-1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
         },
         {
           id: "ticket-2",
@@ -86,9 +99,9 @@ export function CalendarView() {
           priority: "medium",
           category: "Software",
           userId: "user-2",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
         },
         {
           id: "ticket-3",
@@ -99,11 +112,11 @@ export function CalendarView() {
           priority: "low",
           category: "Hardware",
           userId: "user-3",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
         },
-      ] as Ticket[]
+      ]
 
       setTickets(mockTickets)
 
@@ -113,7 +126,7 @@ export function CalendarView() {
         .map((ticket) => ({
           id: `ticket-${ticket.id}`,
           title: `${ticket.reference}: ${ticket.title}`,
-          date: ticket.dueDate!,
+          date: ticket.dueDate!, // Already a string
           description: ticket.description,
           type: "ticket" as EventType,
           ticketId: ticket.id,
@@ -141,21 +154,21 @@ export function CalendarView() {
         {
           id: "event-1",
           title: "Scheduled Maintenance",
-          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
           description: "Scheduled server maintenance. Expect brief service interruptions.",
           type: "maintenance",
         },
         {
           id: "event-2",
           title: "Company Holiday",
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
           description: "Company-wide holiday. Office closed.",
           type: "holiday",
         },
         {
           id: "event-3",
           title: "Security Alert",
-          date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Tomorrow
+          date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
           description: "Security system update scheduled.",
           type: "alert",
         },
@@ -204,7 +217,7 @@ export function CalendarView() {
 
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
-    return events.filter((event) => isSameDay(event.date, date))
+    return events.filter((event) => isSameDay(new Date(event.date), date))
   }
 
   // Handle date click to add new event
@@ -238,7 +251,7 @@ export function CalendarView() {
     const newCalendarEvent: CalendarEvent = {
       id: eventId,
       title: newEvent.title,
-      date: newEvent.date,
+      date: newEvent.date.toISOString(), // Convert Date to string
       description: newEvent.description,
       type: newEvent.type,
     }
