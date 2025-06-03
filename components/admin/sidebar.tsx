@@ -24,7 +24,7 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useSidebar } from "@/app/context/sidebar-context"
+import { useSidebar } from "@/app/context/SidebarContext"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 

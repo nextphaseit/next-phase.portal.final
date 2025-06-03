@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/components/providers/auth-provider"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { LogOut, Settings, User } from "lucide-react"
 
 export function UserNav() {
   const { user, signOut } = useAuth()
@@ -54,13 +55,15 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
               Profile
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/admin/settings">
+            <Link href="/admin/settings" className="flex items-center">
+              <Settings className="mr-2 h-4 w-4" />
               Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </Link>
@@ -69,8 +72,9 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+          className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
         >
+          <LogOut className="mr-2 h-4 w-4" />
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
