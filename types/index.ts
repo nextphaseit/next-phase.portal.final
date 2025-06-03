@@ -6,8 +6,8 @@ export interface User {
   email: string
   role: UserRole
   department?: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export type TicketStatus = "open" | "in-progress" | "resolved" | "closed"
@@ -24,9 +24,9 @@ export interface Ticket {
   department?: string
   userId: string
   assignedToId?: string
-  createdAt: Date
-  updatedAt: Date
-  dueDate?: Date
+  createdAt: string
+  updatedAt: string
+  dueDate?: string
   files?: TicketFile[]
   comments?: TicketComment[]
 }
@@ -38,7 +38,7 @@ export interface TicketFile {
   url: string
   size: number
   type: string
-  uploadedAt: Date
+  uploadedAt: string
 }
 
 export interface TicketComment {
@@ -46,7 +46,7 @@ export interface TicketComment {
   ticketId: string
   userId: string
   content: string
-  createdAt: Date
+  createdAt: string
   isInternal: boolean
 }
 
@@ -56,21 +56,10 @@ export interface KnowledgeArticle {
   content: string
   category: string
   tags: string[]
-  createdAt: Date
-  updatedAt: Date
-  publishedAt?: Date | null
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
   authorId: string
-}
-
-// Helper type for creating/updating knowledge articles
-export interface KnowledgeArticleInput {
-  id?: string
-  title: string
-  content: string
-  category: string
-  tags: string[]
-  publishedAt?: Date | null
-  authorId?: string
 }
 
 export interface Announcement {
@@ -79,8 +68,8 @@ export interface Announcement {
   content: string
   isActive: boolean
   isInternal: boolean
-  createdAt: Date
-  expiresAt?: Date
+  createdAt: string
+  expiresAt?: string
 }
 
 export interface ServiceCatalogItem {
@@ -95,8 +84,8 @@ export interface CalendarEvent {
   id: string
   title: string
   description?: string
-  start: Date
-  end?: Date
+  start: string
+  end?: string
   allDay?: boolean
   type: "ticket" | "alert" | "holiday" | "maintenance"
   ticketId?: string
