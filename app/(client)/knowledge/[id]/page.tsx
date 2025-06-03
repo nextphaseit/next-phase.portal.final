@@ -3,94 +3,59 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Calendar } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { ArrowLeft, Calendar, User, Tag, BookOpen } from "lucide-react"
 import Link from "next/link"
 
-// Fallback article data
-const fallbackArticles = {
-  "1": {
-    id: "1",
-    title: "How to Reset Your Password",
-    content:
-      "## Password Reset Instructions\n\nFollow these steps to reset your password:\n\n1. Click on the 'Forgot Password' link on the login page\n2. Enter your email address\n3. Check your email for a reset link\n4. Click the link and enter your new password\n5. Log in with your new password",
-    category: "Account Management",
-    tags: ["password", "account", "security"],
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T10:30:00Z",
-    publishedAt: "2024-01-15T10:30:00Z",
-    authorId: "admin",
-  },
-  "2": {
-    id: "2",
-    title: "VPN Setup Guide",
-    content:
-      "## VPN Configuration\n\nThis guide will help you set up VPN access:\n\n1. Download the VPN client from the downloads section\n2. Install the client on your device\n3. Open the application and enter your credentials\n4. Select the appropriate server location\n5. Click Connect to establish a secure connection",
-    category: "Network",
-    tags: ["vpn", "network", "security"],
-    createdAt: "2024-01-14T09:15:00Z",
-    updatedAt: "2024-01-14T09:15:00Z",
-    publishedAt: "2024-01-14T09:15:00Z",
-    authorId: "admin",
-  },
-  "3": {
-    id: "3",
-    title: "Email Configuration on Mobile",
-    content:
-      "## Mobile Email Setup\n\nConfigure your work email on your mobile device:\n\n1. Open the email app on your device\n2. Select 'Add Account'\n3. Choose 'Exchange' or 'Office 365'\n4. Enter your email address and password\n5. Accept the server settings\n6. Choose which data to sync (email, contacts, calendar)",
-    category: "Email",
-    tags: ["email", "mobile", "configuration"],
-    createdAt: "2024-01-13T14:20:00Z",
-    updatedAt: "2024-01-13T14:20:00Z",
-    publishedAt: "2024-01-13T14:20:00Z",
-    authorId: "admin",
-  },
+interface KnowledgeArticle {
+  id: string
+  title: string
+  content: string
+  category: string
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  authorId: string
 }
 
 export default function ArticlePage() {
   const params = useParams()
   const router = useRouter()
-  const [article, setArticle] = useState(null)
+  const [article, setArticle] = useState<KnowledgeArticle | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!params.id) return
-
-    const fetchArticle = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        // Try to fetch from API
-        const response = await fetch(`/api/knowledge/${params.id}`)
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        setArticle(data)
-      } catch (error) {
-        console.error("Error fetching article:", error)
-
-        // Use fallback data if available
-        if (fallbackArticles[params.id]) {
-          setArticle(fallbackArticles[params.id])
-          setError("Using cached version of this article.")
-        } else {
-          setError("Failed to load article. It may have been moved or deleted.")
-        }
-      } finally {
-        setIsLoading(false)
-      }
+    if (params.id) {
+      fetchArticle(params.id as string)
     }
-
-    fetchArticle()
   }, [params.id])
 
-  const formatDate = (dateString) => {
+  const fetchArticle = async (id: string) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/knowledge/${id}`)
+      if (response.ok) {
+        const data = await response.json()
+        // Only show published articles to clients
+        if (data.publishedAt) {
+          setArticle(data)
+        } else {
+          setError("Article not found")
+        }
+      } else {
+        setError("Article not found")
+      }
+    } catch (error) {
+      setError("Failed to load article")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -98,45 +63,35 @@ export default function ArticlePage() {
     })
   }
 
-  // Simple markdown renderer
-  const renderMarkdown = (content) => {
-    if (!content) return ""
-
-    // Convert headers
-    let html = content
-      .replace(/## (.*?)$/gm, '<h2 class="text-2xl font-bold mt-6 mb-3">$1</h2>')
-      .replace(/# (.*?)$/gm, '<h1 class="text-3xl font-bold mt-8 mb-4">$1</h1>')
-
-    // Convert lists
-    html = html.replace(/^\d+\. (.*?)$/gm, '<li class="ml-6 list-decimal">$1</li>')
-    html = html.replace(/^- (.*?)$/gm, '<li class="ml-6 list-disc">$1</li>')
-
-    // Convert paragraphs (any line that's not a header or list item)
-    html = html.replace(/^(?!<h|<li)(.*?)$/gm, '<p class="my-3">$1</p>')
-
-    // Group list items
-    html = html.replace(/(<li.*?>.*?<\/li>)\n(<li.*?>.*?<\/li>)/g, "$1$2")
-    html = html.replace(/(<li class="ml-6 list-decimal">.*?<\/li>)+/g, '<ol class="my-4">$&</ol>')
-    html = html.replace(/(<li class="ml-6 list-disc">.*?<\/li>)+/g, '<ul class="my-4">$&</ul>')
-
-    // Bold and italic
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>")
-
-    return html
+  // Simple markdown-to-HTML converter
+  const renderMarkdown = (content: string) => {
+    return content
+      .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold mt-8 mb-4 text-gray-900">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-semibold mt-10 mb-6 text-gray-900">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-10 mb-6 text-gray-900">$1</h1>')
+      .replace(/^\* (.*$)/gim, '<li class="ml-6 mb-2">$1</li>')
+      .replace(/^\d+\. (.*$)/gim, '<li class="ml-6 mb-2">$1</li>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold">$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em class="italic">$1</em>')
+      .replace(/`(.*?)`/gim, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">$1</code>')
+      .replace(/\n\n/gim, '</p><p class="mb-4">')
+      .replace(/\n/gim, "<br>")
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-6"></div>
+              <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+              <div className="space-y-4">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-4 bg-gray-200 rounded w-full"></div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -144,87 +99,98 @@ export default function ArticlePage() {
     )
   }
 
-  if (error && !article) {
+  if (error || !article) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Article Not Found</h1>
-          <p className="mb-6">{error}</p>
-          <Button asChild>
-            <Link href="/knowledge">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Knowledge Base
-            </Link>
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  if (!article) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Article Not Found</h1>
-          <p className="mb-6">The article you're looking for doesn't exist or has been removed.</p>
-          <Button asChild>
-            <Link href="/knowledge">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Knowledge Base
-            </Link>
-          </Button>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center py-8">
+            <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Article Not Found</h2>
+            <p className="text-gray-600 mb-4">
+              The article you're looking for doesn't exist or is no longer available.
+            </p>
+            <Button asChild>
+              <Link href="/knowledge">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Knowledge Base
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        {/* Back button */}
-        <div className="mb-6">
-          <Button variant="ghost" asChild>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <Button variant="ghost" asChild className="mb-6">
             <Link href="/knowledge">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Knowledge Base
             </Link>
           </Button>
-        </div>
 
-        {/* Error notification if using fallback */}
-        {error && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-md p-4">
-            <p className="text-amber-800 text-sm">{error}</p>
+          {/* Article Header */}
+          <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Badge variant="secondary">{article.category}</Badge>
+              <Badge variant="default">Published</Badge>
+            </div>
+
+            <h1 className="text-4xl font-bold text-gray-900 mb-6">{article.title}</h1>
+
+            <div className="flex items-center gap-6 text-sm text-gray-600 mb-6">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>Published {formatDate(article.publishedAt)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>By {article.authorId}</span>
+              </div>
+              {article.tags.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Tag className="h-4 w-4" />
+                  <span>{article.tags.length} tags</span>
+                </div>
+              )}
+            </div>
+
+            {article.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {article.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Article header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <Badge variant="secondary">{article.category}</Badge>
-            <div className="text-sm text-gray-500 flex items-center">
-              <Calendar className="h-3 w-3 mr-1" />
-              {formatDate(article.updatedAt)}
+          {/* Article Content */}
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <div className="prose prose-lg max-w-none">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: `<p class="mb-4">${renderMarkdown(article.content)}</p>`,
+                }}
+                className="text-gray-700 leading-relaxed"
+              />
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
-
-          {article.tags && article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {article.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-600 mb-4">Was this article helpful?</p>
+            <div className="flex justify-center gap-4">
+              <Button variant="outline">👍 Yes</Button>
+              <Button variant="outline">👎 No</Button>
             </div>
-          )}
+          </div>
         </div>
-
-        {/* Article content */}
-        <Card className="p-6">
-          <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content) }} />
-        </Card>
       </div>
     </div>
   )

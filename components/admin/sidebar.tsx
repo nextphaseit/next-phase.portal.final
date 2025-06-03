@@ -19,11 +19,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Calendar,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useSidebar } from "@/app/(admin)/admin/layout"
+import { useSidebar } from "@/app/admin/layout"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -42,6 +43,7 @@ export function AdminSidebar({ className }: SidebarProps) {
     { href: "/admin/tickets", icon: Inbox, label: "Tickets" },
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/knowledge", icon: FileText, label: "Knowledge Base" },
+    { href: "/admin/calendar", icon: Calendar, label: "Calendar" },
     { href: "/admin/announcements", icon: Bell, label: "Announcements" },
     { href: "/admin/services", icon: LifeBuoy, label: "Services" },
     { href: "/admin/files", icon: FolderOpen, label: "Files" },

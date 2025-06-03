@@ -1,155 +1,83 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
+import { promises as fs } from "fs"
+import path from "path"
+import type { KnowledgeArticle } from "../route"
 
-// Mock data directly in the API route
-const mockArticles = {
-  "1": {
-    id: "1",
-    title: "How to Reset Your Password",
-    content:
-      "## Password Reset Instructions\n\nFollow these steps to reset your password:\n\n1. Click on the 'Forgot Password' link on the login page\n2. Enter your email address\n3. Check your email for a reset link\n4. Click the link and enter your new password\n5. Log in with your new password",
-    category: "Account Management",
-    tags: ["password", "account", "security"],
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T10:30:00Z",
-    publishedAt: "2024-01-15T10:30:00Z",
-    authorId: "admin",
-  },
-  "2": {
-    id: "2",
-    title: "VPN Setup Guide",
-    content:
-      "## VPN Configuration\n\nThis guide will help you set up VPN access:\n\n1. Download the VPN client from the downloads section\n2. Install the client on your device\n3. Open the application and enter your credentials\n4. Select the appropriate server location\n5. Click Connect to establish a secure connection",
-    category: "Network",
-    tags: ["vpn", "network", "security"],
-    createdAt: "2024-01-14T09:15:00Z",
-    updatedAt: "2024-01-14T09:15:00Z",
-    publishedAt: "2024-01-14T09:15:00Z",
-    authorId: "admin",
-  },
-  "3": {
-    id: "3",
-    title: "Email Configuration on Mobile",
-    content:
-      "## Mobile Email Setup\n\nConfigure your work email on your mobile device:\n\n1. Open the email app on your device\n2. Select 'Add Account'\n3. Choose 'Exchange' or 'Office 365'\n4. Enter your email address and password\n5. Accept the server settings\n6. Choose which data to sync (email, contacts, calendar)",
-    category: "Email",
-    tags: ["email", "mobile", "configuration"],
-    createdAt: "2024-01-13T14:20:00Z",
-    updatedAt: "2024-01-13T14:20:00Z",
-    publishedAt: "2024-01-13T14:20:00Z",
-    authorId: "admin",
-  },
-  "4": {
-    id: "4",
-    title: "Software Installation Requests",
-    content:
-      "## Requesting New Software\n\nTo request installation of new software:\n\n1. Navigate to the Service Desk portal\n2. Create a new ticket with category 'Software Request'\n3. Provide the name and version of the software\n4. Explain the business justification\n5. Wait for approval from your manager\n6. IT will schedule the installation once approved",
-    category: "Software",
-    tags: ["software", "installation", "requests"],
-    createdAt: "2024-01-12T11:45:00Z",
-    updatedAt: "2024-01-12T11:45:00Z",
-    publishedAt: "2024-01-12T11:45:00Z",
-    authorId: "admin",
-  },
-}
+const dbPath = path.join(process.cwd(), "data", "knowledge-articles.json")
 
-export async function GET(request, { params }) {
+async function getArticles(): Promise<KnowledgeArticle[]> {
   try {
-    const id = params.id
-
-    // Check if article exists
-    if (!mockArticles[id]) {
-      return new NextResponse(JSON.stringify({ error: "Article not found" }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-    }
-
-    // Return the article
-    return new NextResponse(JSON.stringify(mockArticles[id]), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-  } catch (error) {
-    console.error("Error in GET /api/knowledge/[id]:", error)
-
-    return new NextResponse(JSON.stringify({ error: "Failed to fetch article" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    const data = await fs.readFile(dbPath, "utf-8")
+    return JSON.parse(data)
+  } catch {
+    return []
   }
 }
 
-export async function PUT(request, { params }) {
+async function saveArticles(articles: KnowledgeArticle[]) {
+  await fs.mkdir(path.dirname(dbPath), { recursive: true })
+  await fs.writeFile(dbPath, JSON.stringify(articles, null, 2))
+}
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = params.id
+    const articles = await getArticles()
+    const article = articles.find((a) => a.id === params.id)
+
+    if (!article) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(article)
+  } catch (error) {
+    console.error("Error fetching article:", error)
+    return NextResponse.json({ error: "Failed to fetch article" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
     const body = await request.json()
+    const { title, content, category, tags, publishedAt } = body
 
-    // Check if article exists
-    if (!mockArticles[id]) {
-      return new NextResponse(JSON.stringify({ error: "Article not found" }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    const articles = await getArticles()
+    const articleIndex = articles.findIndex((a) => a.id === params.id)
+
+    if (articleIndex === -1) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 })
     }
 
-    // In a real app, we would update the article here
-    // For now, just return success
-    return new NextResponse(JSON.stringify({ ...mockArticles[id], ...body, updatedAt: new Date().toISOString() }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-  } catch (error) {
-    console.error("Error in PUT /api/knowledge/[id]:", error)
+    articles[articleIndex] = {
+      ...articles[articleIndex],
+      title,
+      content,
+      category,
+      tags: tags || [],
+      updatedAt: new Date().toISOString(),
+      publishedAt: publishedAt ? new Date().toISOString() : null,
+    }
 
-    return new NextResponse(JSON.stringify({ error: "Failed to update article" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    await saveArticles(articles)
+    return NextResponse.json(articles[articleIndex])
+  } catch (error) {
+    console.error("Error updating article:", error)
+    return NextResponse.json({ error: "Failed to update article" }, { status: 500 })
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = params.id
+    const articles = await getArticles()
+    const filteredArticles = articles.filter((a) => a.id !== params.id)
 
-    // Check if article exists
-    if (!mockArticles[id]) {
-      return new NextResponse(JSON.stringify({ error: "Article not found" }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    if (filteredArticles.length === articles.length) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 })
     }
 
-    // In a real app, we would delete the article here
-    // For now, just return success
-    return new NextResponse(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    await saveArticles(filteredArticles)
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error in DELETE /api/knowledge/[id]:", error)
-
-    return new NextResponse(JSON.stringify({ error: "Failed to delete article" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    console.error("Error deleting article:", error)
+    return NextResponse.json({ error: "Failed to delete article" }, { status: 500 })
   }
 }

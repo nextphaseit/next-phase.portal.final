@@ -1,10 +1,10 @@
 [
   {
     "id": "1",
-    "title": "Getting Started with Our Help Desk",
-    "content": "# Welcome to NextPhase IT Help Desk\n\nThis guide will help you get started with our help desk system.\n\n## How to Submit a Ticket\n\n1. Navigate to the dashboard\n2. Click on \"Submit New Request\"\n3. Fill out the form with your issue details\n4. Attach any relevant files\n5. Submit your request\n\n## Tracking Your Tickets\n\nYou can track the status of your tickets in the \"My Tickets\" section. Tickets go through the following states:\n\n- **Open**: Your ticket has been received\n- **In Progress**: Our team is working on your issue\n- **Resolved**: The issue has been fixed\n- **Closed**: The ticket is complete\n\n## Need Help?\n\nIf you need immediate assistance, you can also browse our knowledge base for common solutions.",
+    "title": "Getting Started with Our Platform",
+    "content": "# Welcome to Our Platform\n\nThis guide will help you get started with our platform quickly and efficiently.\n\n## First Steps\n\n1. **Create your account** - Sign up using your email address\n2. **Verify your email** - Check your inbox for a verification link\n3. **Complete your profile** - Add your basic information\n4. **Explore the dashboard** - Familiarize yourself with the interface\n\n## Key Features\n\n### Dashboard Overview\nThe dashboard provides a comprehensive view of your account activity and quick access to important features.\n\n### Navigation\nUse the sidebar navigation to access different sections of the platform.\n\n### Settings\nCustomize your experience through the settings panel.\n\n## Need Help?\n\nIf you need assistance, please don't hesitate to contact our support team.",
     "category": "Getting Started",
-    "tags": ["help desk", "tickets", "getting started"],
+    "tags": ["onboarding", "tutorial", "basics"],
     "createdAt": "2024-01-15T10:00:00.000Z",
     "updatedAt": "2024-01-15T10:00:00.000Z",
     "publishedAt": "2024-01-15T10:00:00.000Z",
@@ -12,13 +12,13 @@
   },
   {
     "id": "2",
-    "title": "Password Reset Instructions",
-    "content": "# How to Reset Your Password\n\nIf you've forgotten your password, follow these steps to reset it:\n\n## Self-Service Password Reset\n\n1. Go to the login page\n2. Click \"Forgot Password?\"\n3. Enter your email address\n4. Check your email for reset instructions\n5. Follow the link in the email\n6. Create a new password\n\n## Password Requirements\n\nYour new password must:\n- Be at least 8 characters long\n- Include uppercase and lowercase letters\n- Include at least one number\n- Include at least one special character\n\n## Still Having Issues?\n\nIf you're unable to reset your password using the self-service option, please submit a help desk ticket and our IT team will assist you.",
+    "title": "How to Reset Your Password",
+    "content": "# Password Reset Guide\n\nIf you've forgotten your password, follow these simple steps to reset it.\n\n## Step-by-Step Instructions\n\n1. **Go to the login page**\n2. **Click 'Forgot Password'** - You'll find this link below the login form\n3. **Enter your email address** - Use the same email you registered with\n4. **Check your email** - Look for a password reset email (check spam folder too)\n5. **Click the reset link** - This will take you to a secure page\n6. **Create a new password** - Make sure it's strong and unique\n7. **Confirm your new password** - Enter it again to verify\n8. **Log in** - Use your new password to access your account\n\n## Password Requirements\n\n- At least 8 characters long\n- Include uppercase and lowercase letters\n- Include at least one number\n- Include at least one special character\n\n## Security Tips\n\n- Don't reuse passwords from other accounts\n- Consider using a password manager\n- Enable two-factor authentication for extra security",
     "category": "Account Management",
-    "tags": ["password", "reset", "account", "security"],
-    "createdAt": "2024-01-14T09:00:00.000Z",
-    "updatedAt": "2024-01-14T09:00:00.000Z",
-    "publishedAt": "2024-01-14T09:00:00.000Z",
+    "tags": ["password", "security", "account"],
+    "createdAt": "2024-01-14T09:30:00.000Z",
+    "updatedAt": "2024-01-14T09:30:00.000Z",
+    "publishedAt": "2024-01-14T09:30:00.000Z",
     "authorId": "admin"
   }
 ]

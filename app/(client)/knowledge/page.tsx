@@ -5,48 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Calendar, Tag, ArrowRight, AlertCircle } from "lucide-react"
+import { Search, BookOpen, Calendar, Tag, ArrowRight } from "lucide-react"
 import Link from "next/link"
-
-// Fallback data in case API fails
-const fallbackArticles = [
-  {
-    id: "1",
-    title: "How to Reset Your Password",
-    content: "Step-by-step guide to reset your account password",
-    category: "Account Management",
-    tags: ["password", "account", "security"],
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T10:30:00Z",
-    publishedAt: "2024-01-15T10:30:00Z",
-    authorId: "admin",
-    views: 1245,
-  },
-  {
-    id: "2",
-    title: "VPN Setup Guide",
-    content: "Complete guide to setting up VPN on various devices",
-    category: "Network",
-    tags: ["vpn", "network", "security"],
-    createdAt: "2024-01-14T09:15:00Z",
-    updatedAt: "2024-01-14T09:15:00Z",
-    publishedAt: "2024-01-14T09:15:00Z",
-    authorId: "admin",
-    views: 982,
-  },
-  {
-    id: "3",
-    title: "Email Configuration on Mobile",
-    content: "How to configure your work email on mobile devices",
-    category: "Email",
-    tags: ["email", "mobile", "configuration"],
-    createdAt: "2024-01-13T14:20:00Z",
-    updatedAt: "2024-01-13T14:20:00Z",
-    publishedAt: "2024-01-13T14:20:00Z",
-    authorId: "admin",
-    views: 876,
-  },
-]
 
 interface KnowledgeArticle {
   id: string
@@ -58,7 +18,6 @@ interface KnowledgeArticle {
   updatedAt: string
   publishedAt: string
   authorId: string
-  views?: number
 }
 
 export default function KnowledgeBasePage() {
@@ -66,8 +25,6 @@ export default function KnowledgeBasePage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [usingFallback, setUsingFallback] = useState(false)
 
   useEffect(() => {
     fetchPublishedArticles()
@@ -76,45 +33,13 @@ export default function KnowledgeBasePage() {
   const fetchPublishedArticles = async () => {
     try {
       setIsLoading(true)
-      setError(null)
-      setUsingFallback(false)
-
-      // Add cache-busting query parameter
-      const timestamp = new Date().getTime()
-      const response = await fetch(`/api/knowledge?published=true&t=${timestamp}`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        cache: "no-store",
-      })
-
-      if (!response.ok) {
-        console.warn(`API returned status: ${response.status}`)
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        console.warn(`Invalid content type: ${contentType}`)
-        throw new Error("Response is not JSON")
-      }
-
-      const data = await response.json()
-
-      if (Array.isArray(data)) {
+      const response = await fetch("/api/knowledge?published=true")
+      if (response.ok) {
+        const data = await response.json()
         setArticles(data)
-      } else {
-        console.warn("API returned non-array data:", data)
-        throw new Error("Invalid data format")
       }
     } catch (error) {
       console.error("Error fetching articles:", error)
-      setError("Failed to load articles from the server. Showing sample content instead.")
-
-      // Use fallback data
-      setArticles(fallbackArticles)
-      setUsingFallback(true)
     } finally {
       setIsLoading(false)
     }
@@ -153,8 +78,8 @@ export default function KnowledgeBasePage() {
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4 mx-auto"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8 mx-auto"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white p-6 rounded-lg shadow">
@@ -185,23 +110,6 @@ export default function KnowledgeBasePage() {
           </p>
         </div>
 
-        {/* Error notification if using fallback */}
-        {usingFallback && (
-          <div className="max-w-4xl mx-auto mb-8 bg-amber-50 border border-amber-200 rounded-md p-4 flex items-center">
-            <AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />
-            <div className="text-amber-800 text-sm">
-              {error}
-              <Button
-                variant="link"
-                className="text-amber-800 underline p-0 h-auto ml-2"
-                onClick={fetchPublishedArticles}
-              >
-                Try again
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Search and Filters */}
         <div className="max-w-4xl mx-auto mb-8 space-y-4">
           <div className="relative">
@@ -214,27 +122,25 @@ export default function KnowledgeBasePage() {
             />
           </div>
 
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button
+              variant={selectedCategory === "all" ? "default" : "outline"}
+              onClick={() => setSelectedCategory("all")}
+              size="sm"
+            >
+              All Categories
+            </Button>
+            {categories.map((category) => (
               <Button
-                variant={selectedCategory === "all" ? "default" : "outline"}
-                onClick={() => setSelectedCategory("all")}
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category)}
                 size="sm"
               >
-                All Categories
+                {category}
               </Button>
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  onClick={() => setSelectedCategory(category)}
-                  size="sm"
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* Articles Grid */}
@@ -259,18 +165,8 @@ export default function KnowledgeBasePage() {
                     <div className="flex items-center justify-between mb-2">
                       <Badge variant="secondary">{article.category}</Badge>
                       <div className="flex items-center text-sm text-gray-500">
-                        {article.views && (
-                          <>
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {article.views} views
-                          </>
-                        )}
-                        {!article.views && (
-                          <>
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {formatDate(article.publishedAt)}
-                          </>
-                        )}
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatDate(article.publishedAt)}
                       </div>
                     </div>
                     <CardTitle className="text-lg line-clamp-2">{article.title}</CardTitle>

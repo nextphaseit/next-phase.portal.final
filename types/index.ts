@@ -26,6 +26,7 @@ export interface Ticket {
   assignedToId?: string
   createdAt: Date
   updatedAt: Date
+  dueDate?: Date
   files?: TicketFile[]
   comments?: TicketComment[]
 }
@@ -61,6 +62,17 @@ export interface KnowledgeArticle {
   authorId: string
 }
 
+// Helper type for creating/updating knowledge articles
+export interface KnowledgeArticleInput {
+  id?: string
+  title: string
+  content: string
+  category: string
+  tags: string[]
+  publishedAt?: Date | null
+  authorId?: string
+}
+
 export interface Announcement {
   id: string
   title: string
@@ -77,4 +89,16 @@ export interface ServiceCatalogItem {
   description: string
   category: string
   isActive: boolean
+}
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  description?: string
+  start: Date
+  end?: Date
+  allDay?: boolean
+  type: "ticket" | "alert" | "holiday" | "maintenance"
+  ticketId?: string
+  color?: string
 }

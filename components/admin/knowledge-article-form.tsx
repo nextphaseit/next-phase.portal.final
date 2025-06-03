@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,33 +9,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
-import type { KnowledgeArticle } from "@/types"
+import type { KnowledgeArticle, KnowledgeArticleInput } from "@/types"
 
 interface KnowledgeArticleFormProps {
   article?: KnowledgeArticle | null
-  onSave: (article: KnowledgeArticle) => void
+  onSave: (article: KnowledgeArticleInput) => void
   onCancel: () => void
   categories: string[]
 }
 
 export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: KnowledgeArticleFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<KnowledgeArticleInput>({
     title: "",
     content: "",
     category: "",
-    tags: [] as string[],
-    publishedAt: null as Date | null,
+    tags: [],
+    publishedAt: null,
   })
   const [newTag, setNewTag] = useState("")
 
   useEffect(() => {
     if (article) {
       setFormData({
+        id: article.id,
         title: article.title,
         content: article.content,
         category: article.category,
         tags: article.tags,
         publishedAt: article.publishedAt,
+        authorId: article.authorId,
+      })
+    } else {
+      setFormData({
+        title: "",
+        content: "",
+        category: "",
+        tags: [],
+        publishedAt: null,
       })
     }
   }, [article])
@@ -44,20 +53,14 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const now = new Date()
-    const savedArticle: KnowledgeArticle = {
-      id: article?.id || "",
-      title: formData.title,
-      content: formData.content,
-      category: formData.category,
-      tags: formData.tags,
-      createdAt: article?.createdAt || now,
-      updatedAt: now,
-      publishedAt: formData.publishedAt,
-      authorId: article?.authorId || "current-user",
+    // Create the article input with proper type handling
+    const articleInput: KnowledgeArticleInput = {
+      ...formData,
+      // Only include publishedAt if it's not null
+      ...(formData.publishedAt !== null && { publishedAt: formData.publishedAt }),
     }
 
-    onSave(savedArticle)
+    onSave(articleInput)
   }
 
   const addTag = () => {
