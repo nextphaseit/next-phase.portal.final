@@ -1,12 +1,10 @@
-"use client"
+import type React from "react"
+import { AdminShell } from "@/components/admin/admin-shell"
 
-import { ReactNode } from "react"
-import { SidebarProvider } from "@/app/context/SidebarContext"
-
-export default function AdminShell({ children }: { children: ReactNode }) {
-  return (
-    <SidebarProvider>
-      {children}
-    </SidebarProvider>
-  )
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <AdminShell>{children}</AdminShell>
 }
