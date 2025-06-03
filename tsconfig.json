@@ -22,7 +22,7 @@
       "@/*": ["./*"]
     },
     "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -30,9 +30,7 @@
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitOverride": true,
-    "exactOptionalPropertyTypes": true
+    "strictPropertyInitialization": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

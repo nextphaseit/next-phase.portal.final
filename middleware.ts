@@ -1,35 +1,15 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Rate limiting store (in production, use Redis or similar)
-const rateLimit = new Map<string, { count: number; resetTime: number }>()
-
-function getRateLimitKey(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for")
-  const ip = forwarded ? forwarded.split(",")[0] : request.ip || "unknown"
-  return ip
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now()
-  const limit = rateLimit.get(key)
-
-  if (!limit || now > limit.resetTime) {
-    rateLimit.set(key, { count: 1, resetTime: now + 15 * 60 * 1000 }) // 15 minutes
-    return false
-  }
-
-  if (limit.count >= 100) {
-    // 100 requests per 15 minutes
-    return true
-  }
-
-  limit.count++
-  return false
-}
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Maintenance mode check with safe default
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true"
+
+  if (isMaintenanceMode && !pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
+    return NextResponse.redirect(new URL("/maintenance", request.url))
+  }
 
   // Apply rate limiting to API routes
   if (pathname.startsWith("/api/")) {
@@ -58,6 +38,33 @@ export function middleware(request: NextRequest) {
   }
 
   return response
+}
+
+// Rate limiting store (in production, use Redis or similar)
+const rateLimit = new Map<string, { count: number; resetTime: number }>()
+
+function getRateLimitKey(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for")
+  const ip = forwarded ? forwarded.split(",")[0] : request.ip || "unknown"
+  return ip
+}
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now()
+  const limit = rateLimit.get(key)
+
+  if (!limit || now > limit.resetTime) {
+    rateLimit.set(key, { count: 1, resetTime: now + 15 * 60 * 1000 }) // 15 minutes
+    return false
+  }
+
+  if (limit.count >= 100) {
+    // 100 requests per 15 minutes
+    return true
+  }
+
+  limit.count++
+  return false
 }
 
 export const config = {

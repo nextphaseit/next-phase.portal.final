@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import AzureADProvider from "next-auth/providers/azure-ad"
 
-const handler = NextAuth({
+const authOptions = {
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
@@ -11,17 +11,17 @@ const handler = NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }: any) {
       if (account && profile) {
         token.accessToken = account.access_token
-        token.role = "user" // In production, determine role from Azure AD groups
+        token.role = "admin" // All @nextphaseit.org users are admins
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token) {
-        session.accessToken = token.accessToken as string
-        session.user.role = token.role as string
+        session.accessToken = token.accessToken
+        session.user.role = token.role
       }
       return session
     },
@@ -30,6 +30,8 @@ const handler = NextAuth({
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }

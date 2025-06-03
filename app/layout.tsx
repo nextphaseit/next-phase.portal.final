@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { AuthProvider } from "@/components/providers/auth-provider"
+import { MaintenanceBanner } from "@/components/maintenance-banner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -47,11 +48,6 @@ export const metadata: Metadata = {
     title: "NextPhase IT Help Desk",
     description: "Professional IT support and help desk services",
   },
-  verification: {
-    // Add your verification codes here
-    // google: 'your-google-verification-code',
-    // yandex: 'your-yandex-verification-code',
-  },
     generator: 'v0.dev'
 }
 
@@ -66,6 +62,7 @@ export const viewport: Viewport = {
   ],
 }
 
+// Server component only - no client-side code or additional exports
 export default function RootLayout({
   children,
 }: {
@@ -83,6 +80,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              <MaintenanceBanner />
               {children}
             </ThemeProvider>
           </AuthProvider>
