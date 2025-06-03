@@ -647,7 +647,7 @@ export default function AdminTicketsPage() {
                   <SelectValue placeholder="Select technician" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {mockTechnicians.map((tech) => (
                     <SelectItem key={tech.id} value={tech.id}>
                       {tech.name} - {tech.department}
