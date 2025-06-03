@@ -19,10 +19,11 @@ async function saveArticles(articles: KnowledgeArticle[]) {
   await fs.writeFile(dbPath, JSON.stringify(articles, null, 2))
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const articles = await getArticles()
-    const article = articles.find((a) => a.id === params.id)
+    const article = articles.find((a) => a.id === id)
 
     if (!article) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 })
@@ -35,13 +36,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { title, content, category, tags, publishedAt } = body
 
     const articles = await getArticles()
-    const articleIndex = articles.findIndex((a) => a.id === params.id)
+    const articleIndex = articles.findIndex((a) => a.id === id)
 
     if (articleIndex === -1) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 })
@@ -65,10 +67,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const articles = await getArticles()
-    const filteredArticles = articles.filter((a) => a.id !== params.id)
+    const filteredArticles = articles.filter((a) => a.id !== id)
 
     if (filteredArticles.length === articles.length) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 })
