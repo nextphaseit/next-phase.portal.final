@@ -1,20 +1,27 @@
 import NextAuth from "next-auth"
 import AzureADProvider from "next-auth/providers/azure-ad"
+import { config } from "@/lib/config"
+
+// Determine which Microsoft credentials to use
+const microsoftClientId = config.auth.microsoft.clientId || config.auth.nextAuth.clientId
+const microsoftClientSecret = config.auth.microsoft.clientSecret || config.auth.nextAuth.clientSecret
+const microsoftTenantId = config.auth.microsoft.tenantId || config.auth.nextAuth.tenantId
 
 const authOptions = {
   providers: [
     AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID!,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: process.env.AZURE_AD_TENANT_ID!,
+      clientId: microsoftClientId!,
+      clientSecret: microsoftClientSecret!,
+      tenantId: microsoftTenantId!,
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: config.auth.secret,
   callbacks: {
     async jwt({ token, account, profile }: any) {
       if (account && profile) {
         token.accessToken = account.access_token
-        token.role = "admin" // All @nextphaseit.org users are admins
+        // Determine role based on email domain or profile
+        token.role = profile.email?.endsWith("@nextphaseit.com") ? "admin" : "user"
       }
       return token
     },

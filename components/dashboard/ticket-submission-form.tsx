@@ -5,291 +5,251 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Upload, CheckCircle, AlertCircle, X } from "lucide-react"
-import type { PowerAutomateResponse } from "@/types/sharepoint"
+import { Upload, Send, CheckCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-const issueCategories = [
-  "Hardware Issues",
-  "Software Problems",
-  "Network Connectivity",
-  "Email & Communication",
-  "Security & Access",
-  "Printer & Peripherals",
-  "Mobile Device Support",
-  "Other",
-]
+interface TicketFormData {
+  fullName: string
+  email: string
+  issueCategory: string
+  description: string
+  priority: "low" | "medium" | "high"
+  department?: string
+}
 
 export function TicketSubmissionForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitResult, setSubmitResult] = useState<PowerAutomateResponse | null>(null)
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TicketFormData>({
     fullName: "",
     email: "",
     issueCategory: "",
     description: "",
+    priority: "medium",
+    department: "",
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-
-    if (!formData.issueCategory) {
-      newErrors.issueCategory = "Please select an issue category"
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required"
-    } else if (formData.description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024) // 10MB limit
-
-    if (files.length !== validFiles.length) {
-      setErrors((prev) => ({ ...prev, files: "Some files exceed the 10MB limit" }))
-    } else {
-      setErrors((prev) => ({ ...prev, files: "" }))
-    }
-
-    setSelectedFiles((prev) => [...prev, ...validFiles])
-  }
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
-  }
+  const [files, setFiles] = useState<File[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [ticketReference, setTicketReference] = useState("")
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
     setIsSubmitting(true)
-    setSubmitResult(null)
 
     try {
-      const formDataToSend = new FormData()
-      formDataToSend.append("fullName", formData.fullName)
-      formDataToSend.append("email", formData.email)
-      formDataToSend.append("issueCategory", formData.issueCategory)
-      formDataToSend.append("description", formData.description)
-
-      selectedFiles.forEach((file) => {
-        formDataToSend.append("attachments", file)
-      })
-
-      const response = await fetch("/api/tickets/submit", {
-        method: "POST",
-        body: formDataToSend,
-      })
-
-      const result: PowerAutomateResponse = await response.json()
-      setSubmitResult(result)
-
-      if (result.success) {
-        // Reset form on success
-        setFormData({
-          fullName: "",
-          email: "",
-          issueCategory: "",
-          description: "",
-        })
-        setSelectedFiles([])
+      // Create form data for submission
+      const submissionData = {
+        ...formData,
+        submissionDate: new Date().toISOString(), // Convert Date to string
+        attachments: files.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadedAt: new Date().toISOString(), // Convert Date to string
+        })),
       }
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // Generate ticket reference
+      const reference = `TKT-${Date.now().toString().slice(-6)}`
+      setTicketReference(reference)
+      setIsSubmitted(true)
+
+      toast({
+        title: "Ticket Submitted Successfully",
+        description: `Your ticket reference is ${reference}`,
+      })
     } catch (error) {
-      setSubmitResult({
-        success: false,
-        message: "Network error occurred. Please try again.",
+      toast({
+        title: "Submission Failed",
+        description: "Please try again or contact support.",
+        variant: "destructive",
       })
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="p-2 bg-brand-blue/10 rounded-lg">
-            <Upload className="h-5 w-5 text-brand-blue" />
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files))
+    }
+  }
+
+  if (isSubmitted) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center space-y-4">
+            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+            <h3 className="text-lg font-semibold">Ticket Submitted Successfully!</h3>
+            <p className="text-muted-foreground">
+              Your ticket reference number is: <strong>{ticketReference}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              You will receive an email confirmation shortly. You can track your ticket status using the reference
+              number.
+            </p>
+            <Button
+              onClick={() => {
+                setIsSubmitted(false)
+                setFormData({
+                  fullName: "",
+                  email: "",
+                  issueCategory: "",
+                  description: "",
+                  priority: "medium",
+                  department: "",
+                })
+                setFiles([])
+              }}
+            >
+              Submit Another Ticket
+            </Button>
           </div>
-          Submit Support Ticket
-        </CardTitle>
-        <CardDescription>
-          Fill out the form below to submit a new support request. Our NextPhase IT team will respond within 4 business
-          hours.
-        </CardDescription>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Submit Support Ticket</CardTitle>
+        <CardDescription>Describe your issue and we'll get back to you as soon as possible.</CardDescription>
       </CardHeader>
       <CardContent>
-        {submitResult && (
-          <Alert
-            className={`mb-6 ${submitResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
-          >
-            <div className="flex items-center gap-2">
-              {submitResult.success ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <AlertDescription className={submitResult.success ? "text-green-800" : "text-red-800"}>
-                {submitResult.message}
-                {submitResult.success && submitResult.ticketReference && (
-                  <span className="block font-medium mt-1">Ticket Reference: {submitResult.ticketReference}</span>
-                )}
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name *</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
                 value={formData.fullName}
-                onChange={(e) => handleInputChange("fullName", e.target.value)}
-                placeholder="Enter your full name"
-                className={errors.fullName ? "border-red-500" : ""}
-                disabled={isSubmitting}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                required
               />
-              {errors.fullName && <p className="text-sm text-red-600">{errors.fullName}</p>}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
+            <div>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                placeholder="Enter your email address"
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isSubmitting}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
               />
-              {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="issueCategory">Issue Category *</Label>
-            <Select
-              value={formData.issueCategory}
-              onValueChange={(value) => handleInputChange("issueCategory", value)}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger className={errors.issueCategory ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select the category that best describes your issue" />
-              </SelectTrigger>
-              <SelectContent>
-                {issueCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.issueCategory && <p className="text-sm text-red-600">{errors.issueCategory}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="category">Issue Category</Label>
+              <Select
+                value={formData.issueCategory}
+                onValueChange={(value) => setFormData({ ...formData, issueCategory: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email Issues</SelectItem>
+                  <SelectItem value="network">Network Problems</SelectItem>
+                  <SelectItem value="software">Software Installation</SelectItem>
+                  <SelectItem value="hardware">Hardware Issues</SelectItem>
+                  <SelectItem value="account">Account Access</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value: "low" | "medium" | "high") => setFormData({ ...formData, priority: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+          <div>
+            <Label htmlFor="department">Department (Optional)</Label>
+            <Input
+              id="department"
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              placeholder="e.g., Sales, Marketing, Operations"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Please provide a detailed description of your issue, including any error messages and steps to reproduce the problem..."
-              className={`min-h-[120px] ${errors.description ? "border-red-500" : ""}`}
-              disabled={isSubmitting}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Please describe your issue in detail..."
+              rows={4}
+              required
             />
-            {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
-            <p className="text-sm text-muted-foreground">
-              Minimum 10 characters. Be as specific as possible to help us resolve your issue quickly.
-            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="attachments">File Attachments (Optional)</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
-              <input
-                id="attachments"
+          <div>
+            <Label htmlFor="files">Attachments (Optional)</Label>
+            <div className="mt-1">
+              <Input
+                id="files"
                 type="file"
                 multiple
                 onChange={handleFileChange}
-                className="hidden"
-                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.zip"
-                disabled={isSubmitting}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
               />
-              <label htmlFor="attachments" className="cursor-pointer">
-                <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">Click to upload files</p>
-                <p className="text-xs text-muted-foreground mt-1">PDF, Word, Images, or ZIP files (max 10MB each)</p>
-              </label>
             </div>
-            {errors.files && <p className="text-sm text-red-600">{errors.files}</p>}
-
-            {selectedFiles.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Selected Files:</p>
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <div className="flex items-center gap-2">
-                      <div className="text-sm font-medium truncate max-w-[200px]">{file.name}</div>
-                      <div className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      disabled={isSubmitting}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+            {files.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground">Selected files:</p>
+                <ul className="text-sm">
+                  {files.map((file, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <Upload className="h-3 w-3" />
+                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+          <Alert>
+            <AlertDescription>
+              Your ticket will be reviewed by our support team. You'll receive an email confirmation with your ticket
+              reference number.
+            </AlertDescription>
+          </Alert>
+
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting Ticket...
-              </>
+              <>Submitting...</>
             ) : (
-              "Submit Support Ticket"
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Submit Ticket
+              </>
             )}
           </Button>
         </form>

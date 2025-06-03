@@ -25,7 +25,7 @@ export function AuthGuard({ children, requireAuth = false, requireAdmin = false 
       return
     }
 
-    if (requireAdmin && (!session || session.user?.role !== "admin")) {
+    if (requireAdmin && session?.user?.role !== "admin") {
       router.push("/")
       return
     }
@@ -33,7 +33,7 @@ export function AuthGuard({ children, requireAuth = false, requireAdmin = false 
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex h-screen items-center justify-center">
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
@@ -46,7 +46,7 @@ export function AuthGuard({ children, requireAuth = false, requireAdmin = false 
     return null
   }
 
-  if (requireAdmin && (!session || session.user?.role !== "admin")) {
+  if (requireAdmin && session?.user?.role !== "admin") {
     return null
   }
 

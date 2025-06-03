@@ -13,7 +13,7 @@ export function MaintenanceBanner() {
   }
 
   return (
-    <Alert className="border-orange-200 bg-orange-50 text-orange-800">
+    <Alert className="border-orange-200 bg-orange-50 text-orange-800 rounded-none">
       <AlertTriangle className="h-4 w-4" />
       <AlertDescription>
         The system is currently undergoing maintenance. Some features may be temporarily unavailable.

@@ -1,17 +1,22 @@
 {
-  "name": "nextphase-it-helpdesk",
+  "name": "nextphase-help-desk",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run validate:env && next dev",
+    "build": "npm run validate:env && next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
-    "validate": "npm run type-check && npm run lint && npm run build"
+    "validate:env": "tsx scripts/validate-env.ts",
+    "validate:full": "npm run validate:env && npm run type-check && npm run lint",
+    "pre-deploy": "npm run validate:full && npm run build"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^1.0.0",
+    "@hookform/resolvers": "^3.3.2",
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
@@ -19,6 +24,7 @@
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
@@ -29,22 +35,25 @@
     "lucide-react": "^0.294.0",
     "next": "15.0.0",
     "next-auth": "^4.24.5",
-    "next-themes": "^0.2.1",
     "react": "^18.2.0",
-    "react-day-picker": "^8.9.1",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
     "tailwind-merge": "^2.0.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.53.0",
     "eslint-config-next": "15.0.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
+    "tsx": "^4.1.0",
     "typescript": "^5.2.2"
   }
 }
