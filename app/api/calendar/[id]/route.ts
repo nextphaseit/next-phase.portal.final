@@ -6,8 +6,10 @@ import path from "path"
 const dataFilePath = path.join(process.cwd(), "data", "calendar-events.json")
 
 // Get a specific event by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+
     if (!fs.existsSync(dataFilePath)) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const data = fs.readFileSync(dataFilePath, "utf8")
     const events = JSON.parse(data)
 
-    const event = events.find((e: any) => e.id === params.id)
+    const event = events.find((e: any) => e.id === id)
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
@@ -29,8 +31,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // Update an event
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+
     if (!fs.existsSync(dataFilePath)) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
@@ -38,7 +42,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const data = fs.readFileSync(dataFilePath, "utf8")
     const events = JSON.parse(data)
 
-    const eventIndex = events.findIndex((e: any) => e.id === params.id)
+    const eventIndex = events.findIndex((e: any) => e.id === id)
 
     if (eventIndex === -1) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
@@ -64,8 +68,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // Delete an event
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+
     if (!fs.existsSync(dataFilePath)) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
@@ -73,7 +79,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const data = fs.readFileSync(dataFilePath, "utf8")
     const events = JSON.parse(data)
 
-    const eventIndex = events.findIndex((e: any) => e.id === params.id)
+    const eventIndex = events.findIndex((e: any) => e.id === id)
 
     if (eventIndex === -1) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
