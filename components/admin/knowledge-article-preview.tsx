@@ -9,7 +9,8 @@ interface KnowledgeArticlePreviewProps {
 }
 
 export function KnowledgeArticlePreview({ article }: KnowledgeArticlePreviewProps) {
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: string | null) => {
+    if (!date) return "—"
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",

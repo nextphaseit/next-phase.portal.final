@@ -9,17 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
-import type { KnowledgeArticle, KnowledgeArticleInput } from "@/types"
+import type { KnowledgeArticle } from "@/types"
 
 interface KnowledgeArticleFormProps {
   article?: KnowledgeArticle | null
-  onSave: (article: KnowledgeArticleInput) => void
+  onSave: (article: KnowledgeArticle) => void
   onCancel: () => void
   categories: string[]
 }
 
 export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: KnowledgeArticleFormProps) {
-  const [formData, setFormData] = useState<KnowledgeArticleInput>({
+  const [formData, setFormData] = useState<Partial<KnowledgeArticle>>({
     title: "",
     content: "",
     category: "",
@@ -38,6 +38,8 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
         tags: article.tags,
         publishedAt: article.publishedAt,
         authorId: article.authorId,
+        createdAt: article.createdAt,
+        updatedAt: article.updatedAt,
       })
     } else {
       setFormData({
@@ -53,21 +55,32 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Create the article input with proper type handling
-    const articleInput: KnowledgeArticleInput = {
-      ...formData,
-      // Only include publishedAt if it's not null
-      ...(formData.publishedAt !== null && { publishedAt: formData.publishedAt }),
+    // Ensure required fields are present
+    if (!formData.title || !formData.content || !formData.category) {
+      return
     }
 
-    onSave(articleInput)
+    // Create the article with proper type handling
+    const articleToSave: KnowledgeArticle = {
+      id: formData.id || crypto.randomUUID(),
+      title: formData.title,
+      content: formData.content,
+      category: formData.category,
+      tags: formData.tags || [],
+      publishedAt: formData.publishedAt || null,
+      authorId: formData.authorId || "current-user",
+      createdAt: formData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    onSave(articleToSave)
   }
 
   const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+    if (newTag.trim() && formData.tags && !formData.tags.includes(newTag.trim())) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, newTag.trim()],
+        tags: [...(formData.tags || []), newTag.trim()],
       })
       setNewTag("")
     }
@@ -76,14 +89,14 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
   const removeTag = (tagToRemove: string) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter((tag) => tag !== tagToRemove),
+      tags: (formData.tags || []).filter((tag) => tag !== tagToRemove),
     })
   }
 
   const togglePublished = (published: boolean) => {
     setFormData({
       ...formData,
-      publishedAt: published ? new Date() : null,
+      publishedAt: published ? new Date().toISOString() : null,
     })
   }
 
@@ -95,7 +108,7 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
         </label>
         <Input
           id="title"
-          value={formData.title}
+          value={formData.title || ""}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Enter article title"
           required
@@ -106,7 +119,10 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
         <label htmlFor="category" className="text-sm font-medium">
           Category *
         </label>
-        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+        <Select
+          value={formData.category || ""}
+          onValueChange={(value) => setFormData({ ...formData, category: value })}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
@@ -133,7 +149,7 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
         </label>
         <Textarea
           id="content"
-          value={formData.content}
+          value={formData.content || ""}
           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
           placeholder="Write your article content using Markdown..."
           className="min-h-[300px] font-mono"
@@ -160,7 +176,7 @@ export function KnowledgeArticleForm({ article, onSave, onCancel, categories }: 
             Add
           </Button>
         </div>
-        {formData.tags.length > 0 && (
+        {formData.tags && formData.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {formData.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="flex items-center gap-1">
