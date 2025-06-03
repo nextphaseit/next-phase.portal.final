@@ -32,7 +32,7 @@ type EventType = "ticket" | "alert" | "holiday" | "maintenance"
 interface CalendarEvent {
   id: string
   title: string
-  date: string // Changed from Date to string
+  date: string
   description?: string
   type: EventType
   ticketId?: string
@@ -50,7 +50,7 @@ interface Ticket {
   userId: string
   createdAt: string
   updatedAt: string
-  dueDate?: string // Changed from Date to string
+  dueDate?: string
 }
 
 export function CalendarView() {
@@ -76,6 +76,7 @@ export function CalendarView() {
   // Mock function to fetch tickets from SharePoint
   const fetchTickets = async () => {
     try {
+      const now = new Date()
       const mockTickets: Ticket[] = [
         {
           id: "ticket-1",
@@ -86,9 +87,9 @@ export function CalendarView() {
           priority: "high",
           category: "Network",
           userId: "user-1",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+          dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
         },
         {
           id: "ticket-2",
@@ -99,9 +100,9 @@ export function CalendarView() {
           priority: "medium",
           category: "Software",
           userId: "user-2",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+          dueDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
         },
         {
           id: "ticket-3",
@@ -112,9 +113,9 @@ export function CalendarView() {
           priority: "low",
           category: "Hardware",
           userId: "user-3",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+          dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         },
       ]
 
@@ -126,7 +127,7 @@ export function CalendarView() {
         .map((ticket) => ({
           id: `ticket-${ticket.id}`,
           title: `${ticket.reference}: ${ticket.title}`,
-          date: ticket.dueDate!, // Already a string
+          date: ticket.dueDate!,
           description: ticket.description,
           type: "ticket" as EventType,
           ticketId: ticket.id,
@@ -150,25 +151,26 @@ export function CalendarView() {
   // Mock function to fetch events
   const fetchEvents = async () => {
     try {
+      const now = new Date()
       const mockEvents: CalendarEvent[] = [
         {
           id: "event-1",
           title: "Scheduled Maintenance",
-          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+          date: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
           description: "Scheduled server maintenance. Expect brief service interruptions.",
           type: "maintenance",
         },
         {
           id: "event-2",
           title: "Company Holiday",
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           description: "Company-wide holiday. Office closed.",
           type: "holiday",
         },
         {
           id: "event-3",
           title: "Security Alert",
-          date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+          date: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
           description: "Security system update scheduled.",
           type: "alert",
         },
@@ -251,7 +253,7 @@ export function CalendarView() {
     const newCalendarEvent: CalendarEvent = {
       id: eventId,
       title: newEvent.title,
-      date: newEvent.date.toISOString(), // Convert Date to string
+      date: newEvent.date.toISOString(),
       description: newEvent.description,
       type: newEvent.type,
     }

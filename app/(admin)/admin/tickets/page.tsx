@@ -69,84 +69,87 @@ const mockTechnicians: Technician[] = [
   { id: "4", name: "Sarah Wilson", email: "sarah@company.com", department: "Hardware" },
 ]
 
-const mockTickets: Ticket[] = [
-  {
-    id: "1",
-    reference: "TKT-001",
-    title: "Cannot access email",
-    description: "User unable to access Outlook email application",
-    status: "open",
-    priority: "high",
-    category: "Email",
-    department: "Sales",
-    userId: "user1",
-    userEmail: "user1@company.com",
-    userName: "Alice Brown",
-    assignedToId: "1",
-    assignedToName: "John Doe",
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T10:30:00Z",
-    dueDate: "2024-01-17T17:00:00Z",
-  },
-  {
-    id: "2",
-    reference: "TKT-002",
-    title: "Software installation request",
-    description: "Need Adobe Creative Suite installed on workstation",
-    status: "in-progress",
-    priority: "medium",
-    category: "Software",
-    department: "Marketing",
-    userId: "user2",
-    userEmail: "user2@company.com",
-    userName: "Bob Wilson",
-    assignedToId: "2",
-    assignedToName: "Jane Smith",
-    createdAt: "2024-01-14T14:20:00Z",
-    updatedAt: "2024-01-15T09:15:00Z",
-    dueDate: "2024-01-18T17:00:00Z",
-  },
-  {
-    id: "3",
-    reference: "TKT-003",
-    title: "Network connectivity issues",
-    description: "Intermittent network disconnections in conference room",
-    status: "resolved",
-    priority: "high",
-    category: "Network",
-    department: "Operations",
-    userId: "user3",
-    userEmail: "user3@company.com",
-    userName: "Carol Davis",
-    assignedToId: "2",
-    assignedToName: "Jane Smith",
-    createdAt: "2024-01-13T11:45:00Z",
-    updatedAt: "2024-01-14T16:30:00Z",
-    dueDate: "2024-01-16T17:00:00Z",
-  },
-  {
-    id: "4",
-    reference: "TKT-004",
-    title: "Password reset request",
-    description: "User forgot password and needs reset",
-    status: "closed",
-    priority: "low",
-    category: "Account",
-    department: "HR",
-    userId: "user4",
-    userEmail: "user4@company.com",
-    userName: "David Miller",
-    assignedToId: "1",
-    assignedToName: "John Doe",
-    createdAt: "2024-01-12T09:00:00Z",
-    updatedAt: "2024-01-13T10:15:00Z",
-    dueDate: "2024-01-15T17:00:00Z",
-  },
-]
+const generateMockTickets = (): Ticket[] => {
+  const now = new Date()
+  return [
+    {
+      id: "1",
+      reference: "TKT-001",
+      title: "Cannot access email",
+      description: "User unable to access Outlook email application",
+      status: "open",
+      priority: "high",
+      category: "Email",
+      department: "Sales",
+      userId: "user1",
+      userEmail: "user1@company.com",
+      userName: "Alice Brown",
+      assignedToId: "1",
+      assignedToName: "John Doe",
+      createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: "2",
+      reference: "TKT-002",
+      title: "Software installation request",
+      description: "Need Adobe Creative Suite installed on workstation",
+      status: "in-progress",
+      priority: "medium",
+      category: "Software",
+      department: "Marketing",
+      userId: "user2",
+      userEmail: "user2@company.com",
+      userName: "Bob Wilson",
+      assignedToId: "2",
+      assignedToName: "Jane Smith",
+      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      dueDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: "3",
+      reference: "TKT-003",
+      title: "Network connectivity issues",
+      description: "Intermittent network disconnections in conference room",
+      status: "resolved",
+      priority: "high",
+      category: "Network",
+      department: "Operations",
+      userId: "user3",
+      userEmail: "user3@company.com",
+      userName: "Carol Davis",
+      assignedToId: "2",
+      assignedToName: "Jane Smith",
+      createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      dueDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: "4",
+      reference: "TKT-004",
+      title: "Password reset request",
+      description: "User forgot password and needs reset",
+      status: "closed",
+      priority: "low",
+      category: "Account",
+      department: "HR",
+      userId: "user4",
+      userEmail: "user4@company.com",
+      userName: "David Miller",
+      assignedToId: "1",
+      assignedToName: "John Doe",
+      createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      dueDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ]
+}
 
 export default function AdminTicketsPage() {
-  const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
-  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>(mockTickets)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
@@ -162,6 +165,13 @@ export default function AdminTicketsPage() {
   })
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+
+  // Initialize tickets on mount
+  useEffect(() => {
+    const mockTickets = generateMockTickets()
+    setTickets(mockTickets)
+    setFilteredTickets(mockTickets)
+  }, [])
 
   // Filter tickets based on search and filters
   useEffect(() => {
