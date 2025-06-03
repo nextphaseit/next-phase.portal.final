@@ -1,76 +1,73 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useSidebar } from "@/app/context/SidebarContext"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useSidebar } from "@/app/context/SidebarContext"
 import {
   LayoutDashboard,
   Ticket,
   Users,
-  Settings,
-  FileText,
+  BookOpen,
   Calendar,
   Megaphone,
-  Wrench,
-  FolderOpen,
+  Settings,
+  FileText,
+  Workflow,
   ChevronLeft,
   ChevronRight,
-  Menu,
-  X,
 } from "lucide-react"
 
-const navigation = [
+const sidebarNavItems = [
   {
-    name: "Dashboard",
+    title: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
   },
   {
-    name: "Tickets",
+    title: "Tickets",
     href: "/admin/tickets",
     icon: Ticket,
   },
   {
-    name: "Users",
+    title: "Users",
     href: "/admin/users",
     icon: Users,
   },
   {
-    name: "Knowledge Base",
+    title: "Knowledge Base",
     href: "/admin/knowledge",
-    icon: FileText,
+    icon: BookOpen,
   },
   {
-    name: "Calendar",
+    title: "Calendar",
     href: "/admin/calendar",
     icon: Calendar,
   },
   {
-    name: "Announcements",
+    title: "Announcements",
     href: "/admin/announcements",
     icon: Megaphone,
   },
   {
-    name: "Services",
+    title: "Services",
     href: "/admin/services",
-    icon: Wrench,
+    icon: FileText,
   },
   {
-    name: "Files",
+    title: "Files",
     href: "/admin/files",
-    icon: FolderOpen,
+    icon: FileText,
   },
   {
-    name: "Automation",
+    title: "Automation",
     href: "/admin/automation",
-    icon: Settings,
+    icon: Workflow,
   },
   {
-    name: "Settings",
+    title: "Settings",
     href: "/admin/settings",
     icon: Settings,
   },
@@ -79,70 +76,41 @@ const navigation = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { collapsed, toggleCollapsed } = useSidebar()
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <Button variant="outline" size="icon" onClick={() => setMobileOpen(!mobileOpen)} className="bg-background">
-          {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+    <div
+      className={cn(
+        "relative flex flex-col border-r bg-background transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+      )}
+    >
+      <div className="flex h-14 items-center justify-between px-4">
+        {!collapsed && <h2 className="text-lg font-semibold">Admin Panel</h2>}
+        <Button variant="ghost" size="icon" onClick={toggleCollapsed} className="h-8 w-8">
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
 
-      {/* Mobile overlay */}
-      {mobileOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileOpen(false)} />}
+      <ScrollArea className="flex-1 px-2">
+        <nav className="space-y-1 py-2">
+          {sidebarNavItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
 
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed left-0 top-0 z-40 h-full bg-background border-r transition-all duration-300 ease-in-out",
-          "md:relative md:z-auto",
-          collapsed ? "md:w-16" : "md:w-64",
-          mobileOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:translate-x-0",
-        )}
-      >
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="flex h-16 items-center justify-between px-4 border-b">
-            {!collapsed && (
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">NP</span>
-                </div>
-                <span className="font-semibold text-lg">NextPhase IT</span>
-              </div>
-            )}
-            <Button variant="ghost" size="icon" onClick={toggleCollapsed} className="hidden md:flex">
-              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-          </div>
-
-          {/* Navigation */}
-          <ScrollArea className="flex-1 px-3 py-4">
-            <nav className="space-y-2">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
-                    {!collapsed && <span>{item.name}</span>}
-                  </Link>
-                )
-              })}
-            </nav>
-          </ScrollArea>
-        </div>
-      </div>
-    </>
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn("w-full justify-start", collapsed && "px-2")}
+                >
+                  <Icon className={cn("h-4 w-4", !collapsed && "mr-2")} />
+                  {!collapsed && <span>{item.title}</span>}
+                </Button>
+              </Link>
+            )
+          })}
+        </nav>
+      </ScrollArea>
+    </div>
   )
 }

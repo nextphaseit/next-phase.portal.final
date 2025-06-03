@@ -1,60 +1,33 @@
-"use client"
-
-import { useSearchParams } from "next/navigation"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Logo } from "@/components/ui/logo"
-import { AlertTriangle, Home } from "lucide-react"
 import Link from "next/link"
 
-export default function AuthErrorPage() {
-  const searchParams = useSearchParams()
-  const error = searchParams.get("error")
-
-  const getErrorMessage = (error: string | null) => {
-    switch (error) {
-      case "Configuration":
-        return "There is a problem with the server configuration."
-      case "AccessDenied":
-        return "Access denied. You do not have permission to sign in."
-      case "Verification":
-        return "The verification token has expired or has already been used."
-      default:
-        return "An error occurred during authentication."
-    }
-  }
+export default function AuthErrorPage({
+  searchParams,
+}: {
+  searchParams: { error?: string; message?: string }
+}) {
+  const error = searchParams.error || "Unknown error"
+  const message = searchParams.message || "An error occurred during authentication"
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <Logo size="md" />
-          </div>
-          <div className="flex justify-center">
-            <div className="rounded-full bg-red-100 p-3">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-          <div>
-            <CardTitle className="text-2xl">Authentication Error</CardTitle>
-            <CardDescription>{getErrorMessage(error)}</CardDescription>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">Authentication Error</CardTitle>
+          <CardDescription className="text-center">There was a problem signing you in</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Button asChild className="flex-1">
-              <Link href="/api/auth/signin">Try Again</Link>
-            </Button>
-            <Button variant="outline" asChild className="flex-1">
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Home
-              </Link>
-            </Button>
+        <CardContent>
+          <div className="space-y-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20">
+            <h3 className="font-medium text-red-800 dark:text-red-200">Error: {error}</h3>
+            <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
           </div>
-          {error && <div className="text-center text-sm text-muted-foreground">Error code: {error}</div>}
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button asChild>
+            <Link href="/">Return to Home</Link>
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   )
