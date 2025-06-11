@@ -25,9 +25,16 @@ const mockEvents: CalendarEvent[] = [
   },
 ]
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+type RouteContext = {
+  params: { id: string }
+}
+
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
-    const { id } = params
+    const { id } = context.params
     const event = mockEvents.find((e) => e.id === id)
 
     if (!event) {
@@ -56,9 +63,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
-    const { id } = params
+    const { id } = context.params
     const body = await request.json()
     const { title, description, start, end, allDay, type } = body
 
@@ -105,9 +115,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
-    const { id } = params
+    const { id } = context.params
     const eventIndex = mockEvents.findIndex((e) => e.id === id)
 
     if (eventIndex === -1) {

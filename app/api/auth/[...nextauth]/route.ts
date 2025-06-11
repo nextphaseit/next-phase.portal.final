@@ -11,7 +11,7 @@ const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || process.env.AZURE
 // Check if we have the required credentials
 const hasCredentials = MICROSOFT_CLIENT_ID && MICROSOFT_CLIENT_SECRET && MICROSOFT_TENANT_ID
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: hasCredentials
     ? [
         AzureADProvider({

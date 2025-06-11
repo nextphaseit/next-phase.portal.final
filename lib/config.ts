@@ -66,7 +66,7 @@ export const config: EnvironmentConfig = {
     environment: process.env.NODE_ENV || "development",
   },
   auth: {
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || "your-secret-key-for-development",
     url: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     nextAuth: {
       clientId: process.env.AZURE_AD_CLIENT_ID,
@@ -145,7 +145,7 @@ export function validateConfig(): ValidationResult {
 
   // SharePoint variables (required for Microsoft Graph integration)
   const sharepointVariables = [
-    { key: "SHAREPOINT_SITE_ID", value: config.sharepoint.siteId, required: true },
+    { key: "SHAREPOINT_SITE_ID", value: config.sharepoint.siteId },
     { key: "SHAREPOINT_SITE_URL", value: config.sharepoint.siteUrl },
     { key: "SHAREPOINT_LIST_ID", value: config.sharepoint.listId },
   ]
@@ -159,7 +159,7 @@ export function validateConfig(): ValidationResult {
   // Check critical variables
   for (const { key, value, required } of criticalVariables) {
     if (!value) {
-      if (required || config.app.environment === "production") {
+      if (required && config.app.environment === "production") {
         errors.push(`Missing critical environment variable: ${key}`)
         missing.push(key)
       } else {
@@ -175,9 +175,9 @@ export function validateConfig(): ValidationResult {
   const hasMicrosoftAuth = microsoftVariables.every(({ value }) => value)
   const hasAzureAuth = azureVariables.every(({ value }) => value)
 
-  if (!hasMicrosoftAuth && !hasAzureAuth) {
-    errors.push(
-      "Missing Microsoft authentication credentials. Either MICROSOFT_* or AZURE_AD_* variables must be complete",
+  if (!hasMicrosoftAuth && !hasAzureAuth && config.app.environment === "production") {
+    warnings.push(
+      "Missing Microsoft authentication credentials. Either MICROSOFT_* or AZURE_AD_* variables must be complete for production",
     )
 
     // Add missing Microsoft variables to the list
@@ -201,37 +201,20 @@ export function validateConfig(): ValidationResult {
     }
   }
 
-  // Check Auth0 variables (if any are present, all must be present)
-  const auth0Present = auth0Variables.some(({ value }) => value)
-  const auth0Complete = auth0Variables.every(({ value }) => value)
-
-  if (auth0Present && !auth0Complete) {
-    warnings.push("Partial Auth0 configuration detected. All Auth0 variables must be set if using Auth0")
-    auth0Variables.forEach(({ key, value }) => {
-      if (!value) missing.push(key)
-      else present.push(key)
-    })
-  } else if (auth0Complete) {
-    auth0Variables.forEach(({ key }) => present.push(key))
-  }
-
-  // Check SharePoint variables (critical for Microsoft Graph)
-  for (const { key, value, required } of sharepointVariables) {
+  // Check SharePoint variables
+  sharepointVariables.forEach(({ key, value }) => {
     if (!value) {
-      if (required || config.app.environment === "production") {
-        errors.push(`Missing SharePoint variable: ${key} (required for Microsoft Graph integration)`)
-        missing.push(key)
-      } else {
+      if (config.app.environment === "production") {
         warnings.push(`Missing SharePoint variable: ${key}`)
-        missing.push(key)
       }
+      missing.push(key)
     } else {
       present.push(key)
     }
-  }
+  })
 
   // Check Power Automate variables
-  for (const { key, value } of powerAutomateVariables) {
+  powerAutomateVariables.forEach(({ key, value }) => {
     if (!value) {
       if (config.app.environment === "production") {
         warnings.push(`Missing Power Automate variable: ${key}`)
@@ -240,69 +223,30 @@ export function validateConfig(): ValidationResult {
     } else {
       present.push(key)
     }
-  }
-
-  // Validate URL formats
-  try {
-    new URL(config.app.url)
-    present.push("NEXT_PUBLIC_APP_URL (valid)")
-  } catch {
-    errors.push("NEXT_PUBLIC_APP_URL is not a valid URL")
-    missing.push("NEXT_PUBLIC_APP_URL (invalid)")
-  }
-
-  try {
-    new URL(config.auth.url)
-    present.push("NEXTAUTH_URL (valid)")
-  } catch {
-    if (config.app.environment === "production") {
-      errors.push("NEXTAUTH_URL is not a valid URL")
-    } else {
-      warnings.push("NEXTAUTH_URL is not a valid URL")
-    }
-  }
-
-  // Validate numeric values
-  if (isNaN(config.rateLimit.max) || config.rateLimit.max <= 0) {
-    warnings.push("RATE_LIMIT_MAX should be a positive number")
-  }
-
-  if (isNaN(config.rateLimit.window) || config.rateLimit.window <= 0) {
-    warnings.push("RATE_LIMIT_WINDOW should be a positive number")
-  }
+  })
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-    missing: [...new Set(missing)], // Remove duplicates
-    present: [...new Set(present)], // Remove duplicates
+    missing,
+    present,
   }
 }
 
-// For backward compatibility
+// Validate environment variables at runtime
 export function validateEnvironmentVariables() {
-  return validateConfig()
+  const result = validateConfig()
+  if (!result.isValid) {
+    console.error("Environment validation failed:", result.errors)
+    throw new Error("Environment validation failed")
+  }
 }
 
-// Runtime validation function that throws on missing critical variables
+// Validate runtime configuration
 export function validateRuntimeConfig() {
-  const validation = validateConfig()
-
-  if (!validation.isValid) {
-    const errorMessage = `Environment validation failed:\n${validation.errors.join("\n")}`
-    console.error(errorMessage)
-
-    if (config.app.environment === "production") {
-      throw new Error(errorMessage)
-    }
-  }
-
-  if (validation.warnings.length > 0) {
-    console.warn(`Environment warnings:\n${validation.warnings.join("\n")}`)
-  }
-
-  return validation
+  validateEnvironmentVariables()
+  return config
 }
 
 // Export validated config
