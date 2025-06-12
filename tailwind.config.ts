@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -28,6 +28,8 @@ const config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          dark: "hsl(var(--primary-dark))",
+          light: "hsl(var(--primary-light))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -59,6 +61,26 @@ const config = {
           green: "#00c9a7", // The green from the logo
           gray: "#4a4a4a", // The gray from the logo
         },
+        text: {
+          DEFAULT: "hsl(var(--text))",
+          secondary: "hsl(var(--text-secondary))",
+          muted: "hsl(var(--text-muted))",
+        },
+        dark: {
+          background: {
+            DEFAULT: "hsl(var(--dark-background))",
+            secondary: "hsl(var(--dark-background-secondary))",
+          },
+          text: {
+            DEFAULT: "hsl(var(--dark-text))",
+            secondary: "hsl(var(--dark-text-secondary))",
+            muted: "hsl(var(--dark-text-muted))",
+          },
+          border: {
+            DEFAULT: "hsl(var(--dark-border))",
+            light: "hsl(var(--dark-border-light))",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -78,6 +100,12 @@ const config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      transitionProperty: {
+        'theme': 'background-color, border-color, color, fill, stroke',
+      },
+      transitionDuration: {
+        'theme': '200ms',
       },
     },
   },

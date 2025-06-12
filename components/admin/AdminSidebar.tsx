@@ -22,6 +22,7 @@ const navItems = [
   { name: 'Document Uploads', href: '/admin/documents', icon: FileText },
   { name: 'Analytics Dashboard', href: '/admin/analytics', icon: BarChart2 },
   { name: 'Calendar / Events', href: '/admin/calendar', icon: Calendar },
+  { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
 ];
 
 export default function AdminSidebar({ isOpen }: AdminSidebarProps) {

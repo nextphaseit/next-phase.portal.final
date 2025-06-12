@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, Plus, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { useAudit } from '@/lib/hooks/useAudit';
+import { logAuditEvent, AuditActions } from '@/lib/auditLogger';
+import packageJson from '../../package.json';
 
 // Types
 interface Event {
@@ -17,7 +20,10 @@ interface Event {
   created_at: string;
 }
 
+const VERSION = packageJson.version;
+
 export default function EventsPage() {
+  const { log, AuditActions } = useAudit();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +66,7 @@ export default function EventsPage() {
   }, []);
 
   // Handle event creation
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const { data, error: supabaseError } = await supabase
@@ -82,6 +88,13 @@ export default function EventsPage() {
         attendees: 0,
       });
       toast.success('Event created successfully');
+      
+      // Log the audit event
+      await log(AuditActions.EVENT_CREATED, {
+        eventId: data.id,
+        eventTitle: data.title,
+        eventDate: data.date,
+      });
     } catch (err) {
       console.error('Error creating event:', err);
       toast.error('Failed to create event');
@@ -89,26 +102,38 @@ export default function EventsPage() {
   };
 
   // Handle event update
-  const handleUpdate = async (event: Event) => {
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedEvent) return;
+
     try {
       const { error: supabaseError } = await supabase
         .from('events')
         .update({
-          title: event.title,
-          description: event.description,
-          date: event.date,
-          time: event.time,
-          location: event.location,
-          attendees: event.attendees,
+          title: formData.title,
+          description: formData.description,
+          date: formData.date,
+          time: formData.time,
+          location: formData.location,
+          attendees: formData.attendees,
         })
-        .eq('id', event.id);
+        .eq('id', selectedEvent.id);
 
       if (supabaseError) throw supabaseError;
 
-      setEvents(prev => prev.map(e => e.id === event.id ? event : e));
+      setEvents(prev => prev.map(e => e.id === selectedEvent.id ? { ...e, ...formData } : e));
       setIsModalOpen(false);
       setSelectedEvent(null);
       toast.success('Event updated successfully');
+      
+      // Log the audit event
+      await log(AuditActions.EVENT_UPDATED, {
+        eventId: selectedEvent.id,
+        oldTitle: selectedEvent.title,
+        newTitle: formData.title,
+        oldDate: selectedEvent.date,
+        newDate: formData.date,
+      });
     } catch (err) {
       console.error('Error updating event:', err);
       toast.error('Failed to update event');
@@ -120,6 +145,9 @@ export default function EventsPage() {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
     try {
+      const eventToDelete = events.find(e => e.id === id);
+      if (!eventToDelete) return;
+
       const { error: supabaseError } = await supabase
         .from('events')
         .delete()
@@ -129,6 +157,13 @@ export default function EventsPage() {
 
       setEvents(prev => prev.filter(event => event.id !== id));
       toast.success('Event deleted successfully');
+      
+      // Log the audit event
+      await log(AuditActions.EVENT_DELETED, {
+        eventId: id,
+        eventTitle: eventToDelete.title,
+        eventDate: eventToDelete.date,
+      });
     } catch (err) {
       console.error('Error deleting event:', err);
       toast.error('Failed to delete event');

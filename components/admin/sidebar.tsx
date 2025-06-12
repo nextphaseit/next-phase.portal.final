@@ -67,6 +67,11 @@ const sidebarNavItems = [
     icon: Workflow,
   },
   {
+    title: "Audit Logs",
+    href: "/admin/audit-logs",
+    icon: FileText,
+  },
+  {
     title: "Settings",
     href: "/admin/settings",
     icon: Settings,
