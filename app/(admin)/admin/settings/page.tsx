@@ -1,299 +1,295 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Upload, Save, RefreshCw } from "lucide-react"
-import { Logo } from "@/components/ui/logo"
+import { useState, useEffect } from "react"
+import { Save, AlertTriangle, Shield, Bell } from "lucide-react"
+import AdminRoute from "@/components/auth/AdminRoute"
+import { setMaintenanceMode, getMaintenanceMode, type MaintenanceMode } from "@/lib/systemSettings"
+import { createAdminNotice } from "@/lib/adminNotices"
+import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/components/providers/auth-provider"
 
-export default function AdminSettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true)
-  const [autoAssignment, setAutoAssignment] = useState(false)
-  const [maintenanceMode, setMaintenanceMode] = useState(false)
+export default function SettingsPage() {
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // Maintenance Mode
+  const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceMode>({
+    enabled: false,
+    message: "System is currently under maintenance. Please check back later.",
+  })
+
+  // Admin Notice
+  const [noticeTitle, setNoticeTitle] = useState("")
+  const [noticeMessage, setNoticeMessage] = useState("")
+  const [noticeType, setNoticeType] = useState<"info" | "warning" | "error" | "success">("info")
+  const [noticePriority, setNoticePriority] = useState(2)
+
+  // Load settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setLoading(true)
+
+        // Load maintenance mode settings
+        const maintenance = await getMaintenanceMode()
+        setMaintenanceConfig(maintenance)
+      } catch (error) {
+        console.error("Error loading settings:", error)
+        toast({ title: "Error", description: "Failed to load settings", variant: "destructive" })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSettings()
+  }, [])
+
+  // Save maintenance mode
+  const handleSaveMaintenanceMode = async () => {
+    if (!user?.email) {
+      toast({ title: "Error", description: "User not authenticated", variant: "destructive" })
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      await setMaintenanceMode(
+        maintenanceConfig.enabled,
+        maintenanceConfig.message,
+        maintenanceConfig.scheduled_end,
+        user.email,
+      )
+
+      toast({ title: "Success", description: "Maintenance mode settings saved" })
+    } catch (error) {
+      console.error("Error saving maintenance mode:", error)
+      toast({ title: "Error", description: "Failed to save maintenance mode settings", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Create admin notice
+  const handleCreateNotice = async () => {
+    if (!user?.email || !noticeTitle.trim() || !noticeMessage.trim()) {
+      toast({ title: "Error", description: "Please fill in all notice fields", variant: "destructive" })
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      await createAdminNotice(
+        {
+          title: noticeTitle,
+          message: noticeMessage,
+          type: noticeType,
+          is_active: true,
+          priority: noticePriority,
+          target_roles: ["admin", "super-admin"],
+        },
+        user.email,
+      )
+
+      // Clear form
+      setNoticeTitle("")
+      setNoticeMessage("")
+      setNoticeType("info")
+      setNoticePriority(2)
+
+      toast({ title: "Success", description: "Admin notice created successfully" })
+    } catch (error) {
+      console.error("Error creating notice:", error)
+      toast({ title: "Error", description: "Failed to create admin notice", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <AdminRoute>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006699]"></div>
+        </div>
+      </AdminRoute>
+    )
+  }
+
+  // Check if user is super admin for maintenance mode
+  const isSuperAdmin = user?.role === "super-admin" || user?.role === "admin" // Allow admin for demo
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your help desk system configuration and preferences.</p>
-      </div>
+    <AdminRoute>
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#333333] dark:text-white flex items-center">
+            <Shield className="w-6 h-6 mr-2 text-[#006699]" />
+            System Settings
+          </h1>
+        </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="automation">Automation</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
+        {/* User Info Display */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
+          <div className="flex items-center space-x-2">
+            <Shield className="w-4 h-4 text-blue-500" />
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Logged in as: <strong>{user?.email}</strong> ({user?.role})
+            </span>
+          </div>
+        </div>
 
-        <TabsContent value="general" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>Configure basic system settings and preferences.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="company-name">Company Name</Label>
-                  <Input id="company-name" defaultValue="NextPhase IT" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="support-email">Support Email</Label>
-                  <Input id="support-email" defaultValue="support@nextphaseit.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="default-priority">Default Ticket Priority</Label>
-                  <Select defaultValue="medium">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select defaultValue="est">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="est">Eastern Time (EST)</SelectItem>
-                      <SelectItem value="cst">Central Time (CST)</SelectItem>
-                      <SelectItem value="mst">Mountain Time (MST)</SelectItem>
-                      <SelectItem value="pst">Pacific Time (PST)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* Maintenance Mode Settings */}
+        {isSuperAdmin && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-[#333333] dark:text-white mb-6 flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
+              Maintenance Mode
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="maintenance-enabled"
+                  checked={maintenanceConfig.enabled}
+                  onChange={(e) =>
+                    setMaintenanceConfig((prev) => ({
+                      ...prev,
+                      enabled: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4 text-[#006699] border-gray-300 rounded focus:ring-[#006699]"
+                />
+                <label htmlFor="maintenance-enabled" className="text-sm font-medium text-[#333333] dark:text-white">
+                  Enable Maintenance Mode
+                </label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
-                <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
-                {maintenanceMode && <Badge variant="destructive">Active</Badge>}
-              </div>
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="branding" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Branding & Appearance</CardTitle>
-              <CardDescription>Customize the look and feel of your help desk portal.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Current Logo</Label>
-                  <div className="mt-2 p-4 border rounded-lg bg-muted/50">
-                    <Logo size="md" />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="logo-upload">Upload New Logo</Label>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="logo-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                          <p className="mb-2 text-sm text-muted-foreground">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
-                          </p>
-                          <p className="text-xs text-muted-foreground">PNG, JPG, SVG (MAX. 2MB)</p>
-                        </div>
-                        <input id="logo-upload" type="file" className="hidden" accept="image/*" />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="primary-color">Primary Color</Label>
-                  <div className="flex space-x-2">
-                    <Input id="primary-color" defaultValue="#0066b2" className="flex-1" />
-                    <div className="w-10 h-10 rounded border" style={{ backgroundColor: "#0066b2" }} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="accent-color">Accent Color</Label>
-                  <div className="flex space-x-2">
-                    <Input id="accent-color" defaultValue="#00c9a7" className="flex-1" />
-                    <div className="w-10 h-10 rounded border" style={{ backgroundColor: "#00c9a7" }} />
-                  </div>
-                </div>
-              </div>
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save Branding
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>Configure how and when notifications are sent.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Send email notifications for ticket updates</p>
-                  </div>
-                  <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Auto Assignment</Label>
-                    <p className="text-sm text-muted-foreground">Automatically assign tickets to available agents</p>
-                  </div>
-                  <Switch checked={autoAssignment} onCheckedChange={setAutoAssignment} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email-template">Email Template</Label>
-                <Textarea
-                  id="email-template"
-                  placeholder="Customize your email notification template..."
-                  className="min-h-[150px]"
-                  defaultValue="Hello {user_name},
-
-Your ticket {ticket_reference} has been updated.
-
-Status: {ticket_status}
-Priority: {ticket_priority}
-
-You can view your ticket at: {ticket_url}
-
-Best regards,
-NextPhase IT Support Team"
+              <div>
+                <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">
+                  Maintenance Message
+                </label>
+                <textarea
+                  value={maintenanceConfig.message}
+                  onChange={(e) =>
+                    setMaintenanceConfig((prev) => ({
+                      ...prev,
+                      message: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] h-20 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter maintenance message for users..."
                 />
               </div>
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save Notification Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="automation" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Automation Rules</CardTitle>
-              <CardDescription>Set up automated workflows and rules for ticket management.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Auto-close resolved tickets</h4>
-                    <Switch defaultChecked />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically close tickets that have been resolved for 7 days
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Escalate high priority tickets</h4>
-                    <Switch />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Escalate high priority tickets if not responded to within 1 hour
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Send reminder emails</h4>
-                    <Switch defaultChecked />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Send reminder emails for tickets pending customer response
-                  </p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">
+                  Scheduled End Time (Optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={maintenanceConfig.scheduled_end || ""}
+                  onChange={(e) =>
+                    setMaintenanceConfig((prev) => ({
+                      ...prev,
+                      scheduled_end: e.target.value || undefined,
+                    }))
+                  }
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
               </div>
-              <Button>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Update Automation Rules
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Configure security and access control settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Multi-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Require MFA for admin accounts</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Session Timeout</Label>
-                    <p className="text-sm text-muted-foreground">Automatically log out inactive users</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
+              <button
+                onClick={handleSaveMaintenanceMode}
+                disabled={saving}
+                className="flex items-center px-4 py-2 bg-[#006699] text-white rounded-lg hover:bg-[#005588] disabled:opacity-50 transition-colors"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? "Saving..." : "Save Maintenance Settings"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Admin Notices */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-[#333333] dark:text-white mb-6 flex items-center">
+            <Bell className="w-5 h-5 mr-2 text-blue-500" />
+            Create Admin Notice
+          </h2>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">Notice Title</label>
+                <input
+                  type="text"
+                  value={noticeTitle}
+                  onChange={(e) => setNoticeTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter notice title..."
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="session-duration">Session Duration (minutes)</Label>
-                  <Input id="session-duration" type="number" defaultValue="60" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-policy">Password Policy</Label>
-                  <Select defaultValue="strong">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic (8 characters)</SelectItem>
-                      <SelectItem value="strong">Strong (12 characters, mixed case, numbers)</SelectItem>
-                      <SelectItem value="complex">Complex (16 characters, special chars)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">Notice Type</label>
+                <select
+                  value={noticeType}
+                  onChange={(e) => setNoticeType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="info">Info</option>
+                  <option value="success">Success</option>
+                  <option value="warning">Warning</option>
+                  <option value="error">Error</option>
+                </select>
               </div>
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save Security Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">Notice Message</label>
+              <textarea
+                value={noticeMessage}
+                onChange={(e) => setNoticeMessage(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] h-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Enter notice message..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#333333] dark:text-white mb-2">Priority (1-5)</label>
+              <input
+                type="number"
+                min="1"
+                max="5"
+                value={noticePriority}
+                onChange={(e) => setNoticePriority(Number.parseInt(e.target.value))}
+                className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            <button
+              onClick={handleCreateNotice}
+              disabled={saving || !noticeTitle.trim() || !noticeMessage.trim()}
+              className="flex items-center px-4 py-2 bg-[#006699] text-white rounded-lg hover:bg-[#005588] disabled:opacity-50 transition-colors"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              {saving ? "Creating..." : "Create Notice"}
+            </button>
+          </div>
+        </div>
+
+        {/* Additional Settings Placeholder */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-[#333333] dark:text-white mb-4">Additional Settings</h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Additional system settings will be added here in future updates.
+          </p>
+        </div>
+      </div>
+    </AdminRoute>
   )
 }
