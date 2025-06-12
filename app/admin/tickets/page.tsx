@@ -4,6 +4,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Eye, Pencil, Trash2, ChevronUp, ChevronDown, Clock, X } from 'lucide-react';
 import AdminRoute from '@/components/auth/AdminRoute';
 import { useTheme } from 'components/theme/ThemeProvider';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 // Types
 interface Ticket {
@@ -12,8 +14,8 @@ interface Ticket {
   description: string;
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  createdAt: string;
-  assignedTo: string;
+  created_at: string;
+  assigned_to: string;
 }
 
 // Example data
@@ -24,8 +26,8 @@ const exampleTickets: Ticket[] = [
     description: 'User unable to access the main SharePoint site. Getting 403 error.',
     status: 'Open',
     priority: 'High',
-    createdAt: '2024-03-15',
-    assignedTo: 'John Smith',
+    created_at: '2024-03-15',
+    assigned_to: 'John Smith',
   },
   {
     id: 'TICK-002',
@@ -33,8 +35,8 @@ const exampleTickets: Ticket[] = [
     description: 'New employee needs laptop setup with all required software.',
     status: 'In Progress',
     priority: 'Medium',
-    createdAt: '2024-03-14',
-    assignedTo: 'Sarah Johnson',
+    created_at: '2024-03-14',
+    assigned_to: 'Sarah Johnson',
   },
   {
     id: 'TICK-003',
@@ -42,8 +44,8 @@ const exampleTickets: Ticket[] = [
     description: 'Outlook not syncing emails properly on mobile device.',
     status: 'Resolved',
     priority: 'Low',
-    createdAt: '2024-03-13',
-    assignedTo: 'Mike Wilson',
+    created_at: '2024-03-13',
+    assigned_to: 'Mike Wilson',
   },
   {
     id: 'TICK-004',
@@ -51,8 +53,8 @@ const exampleTickets: Ticket[] = [
     description: 'VPN client keeps disconnecting after 5 minutes of use.',
     status: 'Closed',
     priority: 'Critical',
-    createdAt: '2024-03-12',
-    assignedTo: 'John Smith',
+    created_at: '2024-03-12',
+    assigned_to: 'John Smith',
   },
   {
     id: 'TICK-005',
@@ -60,8 +62,8 @@ const exampleTickets: Ticket[] = [
     description: 'Adobe Creative Cloud licenses need renewal for design team.',
     status: 'Open',
     priority: 'High',
-    createdAt: '2024-03-11',
-    assignedTo: 'Sarah Johnson',
+    created_at: '2024-03-11',
+    assigned_to: 'Sarah Johnson',
   },
   {
     id: 'TICK-006',
@@ -69,8 +71,8 @@ const exampleTickets: Ticket[] = [
     description: 'New office printer needs network configuration and driver setup.',
     status: 'In Progress',
     priority: 'Medium',
-    createdAt: '2024-03-10',
-    assignedTo: 'Mike Wilson',
+    created_at: '2024-03-10',
+    assigned_to: 'Mike Wilson',
   },
   {
     id: 'TICK-007',
@@ -78,8 +80,8 @@ const exampleTickets: Ticket[] = [
     description: 'User locked out of account after multiple failed attempts.',
     status: 'Resolved',
     priority: 'High',
-    createdAt: '2024-03-09',
-    assignedTo: 'John Smith',
+    created_at: '2024-03-09',
+    assigned_to: 'John Smith',
   },
   {
     id: 'TICK-008',
@@ -87,8 +89,8 @@ const exampleTickets: Ticket[] = [
     description: 'Smart TV in conference room not connecting to laptop.',
     status: 'Open',
     priority: 'Medium',
-    createdAt: '2024-03-08',
-    assignedTo: 'Sarah Johnson',
+    created_at: '2024-03-08',
+    assigned_to: 'Sarah Johnson',
   },
   {
     id: 'TICK-009',
@@ -96,8 +98,8 @@ const exampleTickets: Ticket[] = [
     description: 'Department needs assistance with large data backup.',
     status: 'In Progress',
     priority: 'High',
-    createdAt: '2024-03-07',
-    assignedTo: 'Mike Wilson',
+    created_at: '2024-03-07',
+    assigned_to: 'Mike Wilson',
   },
   {
     id: 'TICK-010',
@@ -105,8 +107,8 @@ const exampleTickets: Ticket[] = [
     description: 'New design software needs installation on multiple machines.',
     status: 'Open',
     priority: 'Medium',
-    createdAt: '2024-03-06',
-    assignedTo: 'John Smith',
+    created_at: '2024-03-06',
+    assigned_to: 'John Smith',
   },
   {
     id: 'TICK-011',
@@ -114,8 +116,8 @@ const exampleTickets: Ticket[] = [
     description: 'Intermittent network drops in the marketing department.',
     status: 'In Progress',
     priority: 'Critical',
-    createdAt: '2024-03-05',
-    assignedTo: 'Sarah Johnson',
+    created_at: '2024-03-05',
+    assigned_to: 'Sarah Johnson',
   },
   {
     id: 'TICK-012',
@@ -123,8 +125,8 @@ const exampleTickets: Ticket[] = [
     description: 'New company phones need configuration and app installation.',
     status: 'Open',
     priority: 'High',
-    createdAt: '2024-03-04',
-    assignedTo: 'Mike Wilson',
+    created_at: '2024-03-04',
+    assigned_to: 'Mike Wilson',
   }
 ];
 
@@ -145,24 +147,25 @@ const statusColors = {
 };
 
 // Initial form state
-const initialFormState: Omit<Ticket, 'id' | 'createdAt'> = {
+const initialFormState: Omit<Ticket, 'id' | 'created_at'> = {
   subject: '',
   description: '',
   status: 'Open',
   priority: 'Medium',
-  assignedTo: '',
+  assigned_to: '',
 };
 
 // Sort direction type
 type SortDirection = 'asc' | 'desc' | null;
 
 // Sortable column type
-type SortableColumn = 'id' | 'subject' | 'status' | 'priority' | 'createdAt' | 'assignedTo';
+type SortableColumn = 'id' | 'subject' | 'status' | 'priority' | 'created_at' | 'assigned_to';
 
 export default function AdminPage() {
   const { theme, toggleTheme } = useTheme();
-
-  // Add missing state and refs
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState(initialFormState);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -180,21 +183,243 @@ export default function AdminPage() {
   const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [goToPage, setGoToPage] = useState('');
-  const getPageNumbers = () => [];
-  const handleGoToPage = (e: React.FormEvent) => { e.preventDefault(); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); };
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {};
-  const handleSort = (column: SortableColumn) => {};
-  const handleFilterChange = (type: string, value: string) => {};
-  const handleSearch = (query: string) => {};
-  const removeFromHistory = (query: string, e: React.MouseEvent) => {};
 
-  const filteredAndSortedTickets: Ticket[] = [];
-  const paginatedTickets: Ticket[] = [];
-  const totalPages = 1;
-  const handleView = (ticket: Ticket) => {};
-  const handleEdit = (ticket: Ticket) => {};
-  const handleDelete = (id: string) => {};
+  // Fetch tickets from Supabase
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        let query = supabase
+          .from('tickets')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Apply filters if they exist
+        if (statusFilter) {
+          query = query.eq('status', statusFilter);
+        }
+        if (priorityFilter) {
+          query = query.eq('priority', priorityFilter);
+        }
+        if (searchQuery) {
+          query = query.or(`subject.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+        }
+
+        const { data, error: supabaseError } = await query;
+
+        if (supabaseError) {
+          throw supabaseError;
+        }
+
+        setTickets(data || []);
+      } catch (err) {
+        console.error('Error fetching tickets:', err);
+        setError('Failed to load tickets. Please try again later.');
+        toast.error('Failed to load tickets');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, [statusFilter, priorityFilter, searchQuery]);
+
+  // Handle ticket creation
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('tickets')
+        .insert([{
+          ...formData,
+          created_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (supabaseError) throw supabaseError;
+
+      setTickets(prev => [data, ...prev]);
+      setIsModalOpen(false);
+      setFormData(initialFormState);
+      toast.success('Ticket created successfully');
+    } catch (err) {
+      console.error('Error creating ticket:', err);
+      toast.error('Failed to create ticket');
+    }
+  };
+
+  // Handle ticket update
+  const handleEdit = async (ticket: Ticket) => {
+    try {
+      const { error: supabaseError } = await supabase
+        .from('tickets')
+        .update({
+          subject: ticket.subject,
+          description: ticket.description,
+          status: ticket.status,
+          priority: ticket.priority,
+          assigned_to: ticket.assigned_to,
+        })
+        .eq('id', ticket.id);
+
+      if (supabaseError) throw supabaseError;
+
+      setTickets(prev => prev.map(t => t.id === ticket.id ? ticket : t));
+      setIsEditModalOpen(false);
+      setSelectedTicket(null);
+      toast.success('Ticket updated successfully');
+    } catch (err) {
+      console.error('Error updating ticket:', err);
+      toast.error('Failed to update ticket');
+    }
+  };
+
+  // Handle ticket deletion
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this ticket?')) return;
+
+    try {
+      const { error: supabaseError } = await supabase
+        .from('tickets')
+        .delete()
+        .eq('id', id);
+
+      if (supabaseError) throw supabaseError;
+
+      setTickets(prev => prev.filter(t => t.id !== id));
+      toast.success('Ticket deleted successfully');
+    } catch (err) {
+      console.error('Error deleting ticket:', err);
+      toast.error('Failed to delete ticket');
+    }
+  };
+
+  // Filter and sort tickets
+  const filteredAndSortedTickets = useMemo(() => {
+    let result = [...tickets];
+
+    // Apply sorting
+    if (sortColumn && sortDirection) {
+      result.sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+        
+        if (sortDirection === 'asc') {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
+    }
+
+    return result;
+  }, [tickets, sortColumn, sortDirection]);
+
+  // Paginate tickets
+  const paginatedTickets = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filteredAndSortedTickets.slice(start, end);
+  }, [filteredAndSortedTickets, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedTickets.length / itemsPerPage);
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setShowSearchHistory(false);
+    if (query && !searchHistory.includes(query)) {
+      setSearchHistory(prev => [query, ...prev].slice(0, 5));
+    }
+  };
+
+  // Handle sort
+  const handleSort = (column: SortableColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (type: string, value: string) => {
+    if (type === 'search') {
+      setSearchQuery(value);
+    } else if (type === 'status') {
+      setStatusFilter(value);
+    } else if (type === 'priority') {
+      setPriorityFilter(value);
+    }
+    setCurrentPage(1);
+  };
+
+  // Get page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
+  // Handle go to page
+  const handleGoToPage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(goToPage);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setGoToPage('');
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-[#006699] text-white rounded-lg hover:bg-[#005588]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AdminRoute>
@@ -250,7 +475,10 @@ export default function AdminPage() {
                         <span className="text-sm text-gray-700">{query}</span>
                       </div>
                       <button
-                        onClick={(e) => removeFromHistory(query, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromHistory(query, e);
+                        }}
                         className="p-1 hover:bg-gray-200 rounded-full"
                       >
                         <X className="w-4 h-4 text-gray-400" />
@@ -318,167 +546,192 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tickets Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#f4f4f4]">
-                <tr>
-                  {[
-                    { key: 'id', label: 'Ticket ID' },
-                    { key: 'subject', label: 'Subject' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'priority', label: 'Priority' },
-                    { key: 'createdAt', label: 'Created Date' },
-                    { key: 'assignedTo', label: 'Assigned To' },
-                  ].map(({ key, label }) => (
-                    <th
-                      key={key}
-                      className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider cursor-pointer hover:bg-gray-200"
-                      onClick={() => handleSort(key as SortableColumn)}
-                    >
-                      <div className="flex items-center space-x-1">
-                        <span>{label}</span>
-                        {sortColumn === key && (
-                          <span>
-                            {sortDirection === 'asc' ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : sortDirection === 'desc' ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : null}
+        {/* Loading state */}
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006699]"></div>
+          </div>
+        )}
+
+        {/* No data state */}
+        {!loading && tickets.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-600">No tickets found</p>
+          </div>
+        )}
+
+        {/* Main content */}
+        {!loading && tickets.length > 0 && (
+          <>
+            {/* Tickets Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f4f4f4]">
+                    <tr>
+                      {[
+                        { key: 'id', label: 'Ticket ID' },
+                        { key: 'subject', label: 'Subject' },
+                        { key: 'status', label: 'Status' },
+                        { key: 'priority', label: 'Priority' },
+                        { key: 'created_at', label: 'Created Date' },
+                        { key: 'assigned_to', label: 'Assigned To' },
+                      ].map(({ key, label }) => (
+                        <th
+                          key={key}
+                          className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleSort(key as SortableColumn)}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>{label}</span>
+                            {sortColumn === key && (
+                              <span>
+                                {sortDirection === 'asc' ? (
+                                  <ChevronUp className="w-4 h-4" />
+                                ) : sortDirection === 'desc' ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : null}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {paginatedTickets.map((ticket) => (
+                      <tr key={ticket.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#333333]">
+                          {ticket.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
+                          {ticket.subject}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[ticket.status]}`}>
+                            {ticket.status}
                           </span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {paginatedTickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#333333]">
-                      {ticket.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
-                      {ticket.subject}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[ticket.status]}`}>
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${priorityColors[ticket.priority]}`}>
-                        {ticket.priority}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
-                      {ticket.createdAt}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
-                      {ticket.assignedTo}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex space-x-2">
-                        <button
-                          className="p-1 text-blue-600 hover:text-blue-800"
-                          title="View"
-                          onClick={() => handleView(ticket)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-1 text-yellow-600 hover:text-yellow-800"
-                          title="Edit"
-                          onClick={() => handleEdit(ticket)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-1 text-red-600 hover:text-red-800"
-                          title="Delete"
-                          onClick={() => handleDelete(ticket.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              <div className="flex items-center space-x-1">
-                {getPageNumbers().map((page, index) => (
-                  page === '...' ? (
-                    <span key={`ellipsis-${index}`} className="px-2 text-gray-500">...</span>
-                  ) : (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page as number)}
-                      className={`px-3 py-1 border rounded-lg ${
-                        currentPage === page
-                          ? 'bg-[#006699] text-white border-[#006699]'
-                          : 'border-gray-300 text-[#333333] hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${priorityColors[ticket.priority]}`}>
+                            {ticket.priority}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
+                          {ticket.assigned_to}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              className="p-1 text-blue-600 hover:text-blue-800"
+                              title="View"
+                              onClick={() => {
+                                setSelectedTicket(ticket);
+                                setIsViewModalOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="p-1 text-yellow-600 hover:text-yellow-800"
+                              title="Edit"
+                              onClick={() => {
+                                setSelectedTicket(ticket);
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="p-1 text-red-600 hover:text-red-800"
+                              title="Delete"
+                              onClick={() => handleDelete(ticket.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
             </div>
 
-            {/* Go to page */}
-            <form onSubmit={handleGoToPage} className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Go to page:</span>
-              <input
-                type="number"
-                min="1"
-                max={totalPages}
-                value={goToPage}
-                onChange={(e) => setGoToPage(e.target.value)}
-                className="w-16 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] text-sm"
-                placeholder="#"
-              />
-              <button
-                type="submit"
-                className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50"
-              >
-                Go
-              </button>
-            </form>
-          </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <div className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {getPageNumbers().map((page, index) => (
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-2 text-gray-500">...</span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page as number)}
+                          className={`px-3 py-1 border rounded-lg ${
+                            currentPage === page
+                              ? 'bg-[#006699] text-white border-[#006699]'
+                              : 'border-gray-300 text-[#333333] hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Go to page */}
+                <form onSubmit={handleGoToPage} className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Go to page:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={goToPage}
+                    onChange={(e) => setGoToPage(e.target.value)}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] text-sm"
+                    placeholder="#"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-[#333333] hover:bg-gray-50"
+                  >
+                    Go
+                  </button>
+                </form>
+              </div>
+            )}
+          </>
         )}
 
         {/* New/Edit Ticket Modal */}
@@ -510,7 +763,9 @@ export default function AdminPage() {
                       type="text"
                       name="subject"
                       value={formData.subject}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        setFormData({ ...formData, subject: e.target.value });
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699]"
                       placeholder="Enter ticket subject"
                       required
@@ -523,7 +778,9 @@ export default function AdminPage() {
                     <textarea
                       name="description"
                       value={formData.description}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        setFormData({ ...formData, description: e.target.value });
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699] h-32"
                       placeholder="Enter ticket description"
                       required
@@ -537,7 +794,9 @@ export default function AdminPage() {
                       <select
                         name="priority"
                         value={formData.priority}
-                        onChange={handleInputChange}
+                        onChange={(e) => {
+                          setFormData({ ...formData, priority: e.target.value as 'Low' | 'Medium' | 'High' | 'Critical' });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699]"
                         required
                       >
@@ -554,7 +813,9 @@ export default function AdminPage() {
                       <select
                         name="status"
                         value={formData.status}
-                        onChange={handleInputChange}
+                        onChange={(e) => {
+                          setFormData({ ...formData, status: e.target.value as 'Open' | 'In Progress' | 'Resolved' | 'Closed' });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699]"
                         required
                       >
@@ -569,9 +830,11 @@ export default function AdminPage() {
                         Assign To
                       </label>
                       <select
-                        name="assignedTo"
-                        value={formData.assignedTo}
-                        onChange={handleInputChange}
+                        name="assigned_to"
+                        value={formData.assigned_to}
+                        onChange={(e) => {
+                          setFormData({ ...formData, assigned_to: e.target.value });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006699]"
                         required
                       >
@@ -652,12 +915,12 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-[#333333]">Assigned To</h3>
-                      <p className="mt-1 text-[#333333]">{selectedTicket.assignedTo}</p>
+                      <p className="mt-1 text-[#333333]">{selectedTicket.assigned_to}</p>
                     </div>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-[#333333]">Created Date</h3>
-                    <p className="mt-1 text-[#333333]">{selectedTicket.createdAt}</p>
+                    <p className="mt-1 text-[#333333]">{new Date(selectedTicket.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex justify-end mt-6">

@@ -1,66 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, File, Download, Trash2, X, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 // Types
 interface Document {
   id: string;
   name: string;
   description: string;
-  uploadedDate: string;
-  uploadedBy: string;
-  fileSize: string;
-  fileType: string;
+  created_at: string;
+  uploaded_by: string;
+  file_size: number;
+  file_type: string;
+  file_path: string;
 }
 
-// Example data
-const exampleDocuments: Document[] = [
-  {
-    id: 'DOC-001',
-    name: 'IT Security Policy 2024',
-    description: 'Updated security guidelines and best practices for all employees',
-    uploadedDate: '2024-03-15',
-    uploadedBy: 'John Smith',
-    fileSize: '2.4 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: 'DOC-002',
-    name: 'New Employee Onboarding Guide',
-    description: 'Comprehensive guide for new employee setup and orientation',
-    uploadedDate: '2024-03-14',
-    uploadedBy: 'Sarah Johnson',
-    fileSize: '1.8 MB',
-    fileType: 'DOCX',
-  },
-  {
-    id: 'DOC-003',
-    name: 'Network Infrastructure Diagram',
-    description: 'Current network architecture and connection points',
-    uploadedDate: '2024-03-13',
-    uploadedBy: 'Mike Wilson',
-    fileSize: '3.2 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: 'DOC-004',
-    name: 'Software License Inventory',
-    description: 'Complete list of software licenses and renewal dates',
-    uploadedDate: '2024-03-12',
-    uploadedBy: 'John Smith',
-    fileSize: '950 KB',
-    fileType: 'XLSX',
-  },
-];
-
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>(exampleDocuments);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // Fetch documents from Supabase
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: supabaseError } = await supabase
+          .from('documents')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (supabaseError) throw supabaseError;
+
+        setDocuments(data || []);
+      } catch (err) {
+        console.error('Error fetching documents:', err);
+        setError('Failed to load documents. Please try again later.');
+        toast.error('Failed to load documents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -72,38 +64,120 @@ export default function DocumentsPage() {
     e.preventDefault();
     if (!selectedFile || !title.trim()) return;
 
-    setIsUploading(true);
-    
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      setIsUploading(true);
+      setError(null);
 
-    // Create new document
-    const newDocument: Document = {
-      id: `DOC-${String(documents.length + 1).padStart(3, '0')}`,
-      name: title,
-      description: description,
-      uploadedDate: new Date().toISOString().split('T')[0],
-      uploadedBy: 'Current User', // This would be replaced with actual user
-      fileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
-      fileType: selectedFile.name.split('.').pop()?.toUpperCase() || 'Unknown',
-    };
+      // Upload file to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `documents/${fileName}`;
 
-    setDocuments([newDocument, ...documents]);
-    setSelectedFile(null);
-    setTitle('');
-    setDescription('');
-    setIsUploading(false);
-    setUploadSuccess(true);
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile);
 
-    // Hide success message after 3 seconds
-    setTimeout(() => setUploadSuccess(false), 3000);
-  };
+      if (uploadError) throw uploadError;
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this document?')) {
-      setDocuments(documents.filter(doc => doc.id !== id));
+      // Create document record in database
+      const { data, error: dbError } = await supabase
+        .from('documents')
+        .insert([{
+          name: title,
+          description: description,
+          file_path: filePath,
+          file_size: selectedFile.size,
+          file_type: fileExt?.toUpperCase() || 'Unknown',
+          uploaded_by: 'Current User', // This would be replaced with actual user
+        }])
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      setDocuments(prev => [data, ...prev]);
+      setSelectedFile(null);
+      setTitle('');
+      setDescription('');
+      setUploadSuccess(true);
+      toast.success('Document uploaded successfully');
+
+      // Hide success message after 3 seconds
+      setTimeout(() => setUploadSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error uploading document:', err);
+      setError('Failed to upload document. Please try again.');
+      toast.error('Failed to upload document');
+    } finally {
+      setIsUploading(false);
     }
   };
+
+  const handleDelete = async (id: string, filePath: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+
+    try {
+      // Delete file from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete record from database
+      const { error: dbError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', id);
+
+      if (dbError) throw dbError;
+
+      setDocuments(prev => prev.filter(doc => doc.id !== id));
+      toast.success('Document deleted successfully');
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      toast.error('Failed to delete document');
+    }
+  };
+
+  const handleDownload = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading document:', err);
+      toast.error('Failed to download document');
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-[#006699] text-white rounded-lg hover:bg-[#005588]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -220,83 +294,95 @@ export default function DocumentsPage() {
       </div>
 
       {/* Documents List */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#f4f4f4]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  Document Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  Uploaded Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  Uploaded By
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  File Info
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {documents.map((doc) => (
-                <tr key={doc.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <File className="w-5 h-5 text-[#006699] mr-2" />
-                      <span className="text-sm font-medium text-[#333333]">
-                        {doc.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-[#333333]">{doc.description}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
-                    {doc.uploadedDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
-                    {doc.uploadedBy}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-[#333333]">
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full mr-2">
-                        {doc.fileType}
-                      </span>
-                      <span className="text-gray-500">{doc.fileSize}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex space-x-2">
-                      <a
-                        href="#" // This would be replaced with actual download link
-                        className="p-1 text-blue-600 hover:text-blue-800"
-                        title="Download"
-                      >
-                        <Download className="w-4 h-4" />
-                      </a>
-                      <button
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="Delete"
-                        onClick={() => handleDelete(doc.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006699]"></div>
         </div>
-      </div>
+      ) : documents.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-600">No documents found</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[#f4f4f4]">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    Document Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    Uploaded Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    Uploaded By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    File Info
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[#333333] uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {documents.map((doc) => (
+                  <tr key={doc.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <File className="w-5 h-5 text-[#006699] mr-2" />
+                        <span className="text-sm font-medium text-[#333333]">
+                          {doc.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-[#333333]">{doc.description}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
+                      {new Date(doc.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#333333]">
+                      {doc.uploaded_by}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-[#333333]">
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full mr-2">
+                          {doc.file_type}
+                        </span>
+                        <span className="text-gray-500">
+                          {(doc.file_size / (1024 * 1024)).toFixed(1)} MB
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleDownload(doc.file_path, doc.name)}
+                          className="p-1 text-blue-600 hover:text-blue-800"
+                          title="Download"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="Delete"
+                          onClick={() => handleDelete(doc.id, doc.file_path)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
