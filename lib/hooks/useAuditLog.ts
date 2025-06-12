@@ -35,4 +35,4 @@ export function useAuditLog() {
     logEvent,
     withLogging,
   };
-} 
+}

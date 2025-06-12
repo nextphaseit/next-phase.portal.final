@@ -28,4 +28,4 @@ export function useUserRole() {
     error,
     isAdmin: role === 'admin',
   };
-} 
+}

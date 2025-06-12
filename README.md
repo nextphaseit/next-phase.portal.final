@@ -207,7 +207,7 @@ For technical support, contact: support@nextphaseit.com
 
 Create a robots.txt file:
 
-```plaintext file="public/robots.txt"
+\`\`\`plaintext file="public/robots.txt"
 User-agent: *
 Allow: /
 Disallow: /admin/

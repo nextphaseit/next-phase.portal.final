@@ -8,4 +8,4 @@ declare module '@supabase/supabase-js' {
   interface User {
     user_metadata: UserMetadata;
   }
-} 
+}

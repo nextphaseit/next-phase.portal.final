@@ -120,4 +120,4 @@ export function withAuditLogging<T extends (...args: any[]) => Promise<any>>(
       throw error;
     }
   };
-} 
+}

@@ -36,4 +36,4 @@ export function downloadCSV(csvContent: string, filename: string) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-} 
+}

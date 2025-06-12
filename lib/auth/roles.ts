@@ -53,4 +53,4 @@ export function getRolePermissions(userRole: UserRole | undefined): string[] {
   return Object.entries(featureAccess)
     .filter(([_, roles]) => roles.includes(userRole))
     .map(([feature]) => feature);
-} 
+}

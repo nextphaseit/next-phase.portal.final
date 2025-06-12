@@ -181,4 +181,4 @@ export const AuditActions = {
   // System actions
   SYSTEM_ERROR: 'System Error',
   CONFIGURATION_CHANGED: 'Configuration Changed',
-} as const; 
+} as const;

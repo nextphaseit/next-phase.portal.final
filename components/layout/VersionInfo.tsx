@@ -14,4 +14,4 @@ export default function VersionInfo() {
       </div>
     </footer>
   );
-} 
+}

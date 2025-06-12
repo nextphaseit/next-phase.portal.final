@@ -11,4 +11,4 @@ export interface AuditLogFilters {
   endDate?: string;
   action?: string;
   performed_by?: string;
-} 
+}

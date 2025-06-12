@@ -223,4 +223,4 @@ export default function AuditLogsPage() {
       </div>
     </AdminRoute>
   );
-} 
+}

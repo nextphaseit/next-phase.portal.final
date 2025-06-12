@@ -31,4 +31,4 @@ export default function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
       </div>
     </header>
   );
-} 
+}

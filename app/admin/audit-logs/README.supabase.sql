@@ -14,4 +14,4 @@ CREATE INDEX idx_audit_logs_timestamp ON audit_logs (timestamp DESC);
 CREATE INDEX idx_audit_logs_performed_by ON audit_logs (performed_by);
 
 -- Index for filtering by action
-CREATE INDEX idx_audit_logs_action ON audit_logs (action); 
+CREATE INDEX idx_audit_logs_action ON audit_logs (action);

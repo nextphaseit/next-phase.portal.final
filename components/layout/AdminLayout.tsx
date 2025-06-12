@@ -22,4 +22,4 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <VersionInfo />
     </div>
   );
-} 
+}

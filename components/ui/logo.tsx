@@ -7,7 +7,7 @@ interface LogoProps {
   asLink?: boolean
 }
 
-export function Logo({ className, size = "md", variant = "auto", asLink = true }: LogoProps) {
+export function Logo({ className, size = "md", variant = "auto", asLink = false }: LogoProps) {
   const sizes = {
     sm: { width: 140, height: 40, textSize: "text-lg" },
     md: { width: 180, height: 50, textSize: "text-xl" },

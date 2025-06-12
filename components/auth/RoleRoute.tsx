@@ -52,4 +52,4 @@ export default function RoleRoute({ children, feature, fallback }: RoleRouteProp
   }
 
   return <>{children}</>;
-} 
+}

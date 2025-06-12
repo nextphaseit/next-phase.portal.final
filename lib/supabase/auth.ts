@@ -46,4 +46,4 @@ export async function getCurrentUserRole() {
 export async function isAdmin() {
   const role = await getCurrentUserRole();
   return role === 'admin';
-} 
+}
