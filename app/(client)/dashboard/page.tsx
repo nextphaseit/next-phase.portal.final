@@ -5,36 +5,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TicketSubmissionForm } from "@/components/dashboard/ticket-submission-form"
 import { TicketStatusTracker } from "@/components/dashboard/ticket-status-tracker"
 import { PlusCircle, Clock, CheckCircle, AlertCircle, FileText, Search, TrendingUp } from "lucide-react"
-import { useAuth } from "@/components/providers/auth-provider"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
 import { Loader2 } from "lucide-react"
 import { IntegrationTest } from "@/components/dashboard/integration-test"
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth()
   const router = useRouter()
-  const pathname = usePathname()
+  const session = useSession()
+  const supabase = useSupabaseClient()
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`)
+    if (!session) {
+      router.replace("/signin")
     }
-  }, [user, isLoading, router, pathname])
+  }, [session, router])
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
+  if (!session) {
+    return null
   }
 
-  if (!user) {
-    return null
+  const user = session.user
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.replace("/signin")
   }
 
   return (
@@ -43,9 +39,15 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Support Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user.name}! Manage your IT support requests and track ticket status.
+            Welcome, {user.email}!
           </p>
         </div>
+        <button
+          onClick={handleSignOut}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-medium"
+        >
+          Sign Out
+        </button>
       </div>
 
       {/* Quick Stats */}
