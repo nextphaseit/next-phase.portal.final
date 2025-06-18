@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+type Context = {
+  params: {
+    ticketId: string
+  }
+}
+
 export async function GET(
   req: NextRequest,
-  { params }: { params: { ticketId: string } }
+  context: Context
 ) {
-  return NextResponse.json({ ticketId: params.ticketId })
+  return NextResponse.json({ ticketId: context.params.ticketId })
 } 
