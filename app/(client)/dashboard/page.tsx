@@ -7,20 +7,32 @@ import { TicketStatusTracker } from "@/components/dashboard/ticket-status-tracke
 import { PlusCircle, Clock, CheckCircle, AlertCircle, FileText, Search, TrendingUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
+import { createBrowserClient } from '@supabase/ssr'
 import { Loader2 } from "lucide-react"
 import { IntegrationTest } from "@/components/dashboard/integration-test"
+import { useSession } from '@/hooks/use-session'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const session = useSession()
-  const supabase = useSupabaseClient()
+  const { session, loading } = useSession()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   useEffect(() => {
-    if (!session) {
+    if (!loading && !session) {
       router.replace("/signin")
     }
-  }, [session, router])
+  }, [session, loading, router])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
 
   if (!session) {
     return null

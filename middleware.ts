@@ -51,6 +51,12 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request as any })
   const path = new URL(request.url).pathname
 
+  // Public paths that don't require authentication
+  const publicPaths = ['/api/debug/env']
+  if (publicPaths.includes(path)) {
+    return NextResponse.next()
+  }
+
   // Public API routes that don't require authentication
   const publicRoutes = ['/api/auth']
   if (publicRoutes.some(route => path.startsWith(route))) {

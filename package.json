@@ -11,7 +11,7 @@
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:full": "npm run validate:env && npm run type-check && npm run lint",
     "pre-deploy": "npm run validate:full && npm run build",
-    "clean": "rm -rf .next out node_modules/.cache"
+    "clean": "rimraf .next out node_modules/.cache"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -42,9 +42,8 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/auth-helpers-react": "^0.5.0",
-    "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
     "@touch4it/ical-timezones": "latest",
     "@types/luxon": "latest",
     "@types/mocha": "latest",
@@ -95,6 +94,7 @@
     "eslint": "^8.53.0",
     "eslint-config-next": "15.0.0",
     "postcss": "^8.5",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^3.3.5",
     "tsx": "^4.1.0",
     "typescript": "^5"

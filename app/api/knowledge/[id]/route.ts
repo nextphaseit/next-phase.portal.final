@@ -19,9 +19,9 @@ async function saveArticles(articles: KnowledgeArticle[]) {
   await fs.writeFile(dbPath, JSON.stringify(articles, null, 2))
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await params
+    const { id } = params
     const articles = await getArticles()
     const article = articles.find((a) => a.id === id)
 
@@ -36,9 +36,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await params
+    const { id } = params
     const body = await request.json()
     const { title, content, category, tags, publishedAt } = body
 
@@ -67,9 +67,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await params
+    const { id } = params
     const articles = await getArticles()
     const filteredArticles = articles.filter((a) => a.id !== id)
 

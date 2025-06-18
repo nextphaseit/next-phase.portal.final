@@ -1,14 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-type Context = {
-  params: {
-    ticketId: string
-  }
-}
+import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  context: Context
+  { params }: { params: { ticketId: string } }
 ) {
-  return NextResponse.json({ ticketId: context.params.ticketId })
-} 
+  const { ticketId } = params;
+
+  // Your logic here...
+  return new Response(`Calendar for ticket: ${ticketId}`);
+}
