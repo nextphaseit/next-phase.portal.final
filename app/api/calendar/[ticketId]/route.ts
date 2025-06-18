@@ -1,11 +1,21 @@
 import { NextRequest } from "next/server";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { ticketId: string } }
-) {
-  const { ticketId } = params;
-
-  // Your logic here...
-  return new Response(`Calendar for ticket: ${ticketId}`);
+// ✅ Use the correct type for context
+interface RouteContext {
+  params: {
+    ticketId: string;
+  };
 }
+
+export async function GET(req: NextRequest, context: RouteContext) {
+  const { ticketId } = context.params;
+
+  // Replace this with your actual logic
+  return new Response(JSON.stringify({ message: `You requested ticket ID: ${ticketId}` }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
